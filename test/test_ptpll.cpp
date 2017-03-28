@@ -53,5 +53,21 @@ TEST_CASE("partition operations are correct", "[partition]")
     REQUIRE(tree->back->length == optimized_length);
   }
 
+  SECTION("partitions initialized with a different node order are equivalent")
+  {
+    // clone the tree in such a way that the tips returned by
+    // pll_utree_query_tipnodes() are in a different order
+    pll_utree_t* other_tree = pll_utree_clone(tree->back->next->next);
+
+    pt::pll::Partition other_partition(other_tree, tip_node_count, parameters,
+                                       labels, sequences);
+    other_partition.TraversalUpdate(other_tree, pt::pll::TraversalType::FULL);
+
+    REQUIRE(other_partition.LogLikelihood(other_tree) ==
+            Approx(partition.LogLikelihood(tree)));
+
+    pll_utree_destroy(other_tree);
+  }
+
   pll_utree_destroy(tree);
 }
