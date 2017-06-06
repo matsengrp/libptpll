@@ -5,11 +5,7 @@
 #include <memory>
 #include <vector>
 
-// pll.h is missing a header guard
-#ifndef LIBPLL_PLL_H_
-#define LIBPLL_PLL_H_
 #include <libpll/pll.h>
-#endif
 
 #include "model_parameters.hpp"
 #include "pll_util.hpp"
@@ -31,7 +27,7 @@ class Partition
   std::vector<unsigned int> params_indices_;
 
   // scratch buffers for TraversalUpdate()
-  std::vector<pll_utree_t*> travbuffer_;
+  std::vector<pll_unode_t*> travbuffer_;
   std::vector<double> branch_lengths_;
   std::vector<unsigned int> matrix_indices_;
   std::vector<pll_operation_t> operations_;
@@ -41,7 +37,7 @@ class Partition
 
  public:
   // based on old Partition constructor in partition.cpp
-  Partition(pll_utree_t* tree, unsigned int tip_node_count,
+  Partition(pll_utree_t* tree,
             const ModelParameters& parameters,
             const std::vector<std::string>& labels,
             const std::vector<std::string>& sequences);
@@ -56,14 +52,14 @@ class Partition
 
   ~Partition();
 
-  double LogLikelihood(pll_utree_t* tree, double* per_site_lnl = nullptr);
+  double LogLikelihood(pll_unode_t* tree, double* per_site_lnl = nullptr);
 
-  unsigned int TraversalUpdate(pll_utree_t* root, TraversalType type);
-  void UpdateBranchLength(pll_utree_t* node, double length);
+  unsigned int TraversalUpdate(pll_unode_t* root, TraversalType type);
+  void UpdateBranchLength(pll_unode_t* node, double length);
 
-  double OptimizeBranch(pll_utree_t* node);
-  void OptimizeAllBranchesOnce(pll_utree_t* tree);
-  void OptimizeAllBranches(pll_utree_t* tree);
+  double OptimizeBranch(pll_unode_t* node);
+  void OptimizeAllBranchesOnce(pll_unode_t* tree);
+  void OptimizeAllBranches(pll_unode_t* tree);
 
   unsigned int tip_node_count() const;
   unsigned int inner_node_count() const;

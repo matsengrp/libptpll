@@ -4,11 +4,7 @@
 #include <string>
 #include <vector>
 
-// pll.h is missing a header guard
-#ifndef LIBPLL_PLL_H_
-#define LIBPLL_PLL_H_
 #include <libpll/pll.h>
-#endif
 
 /// @file pll_util.hpp
 /// @brief Utilities for interfacing with libpll.
@@ -26,11 +22,11 @@ typedef struct { int clv_valid; } node_info_t;
 
 enum class TraversalType { FULL, PARTIAL };
 
-int cb_full_traversal(pll_utree_t *node);
-int cb_partial_traversal(pll_utree_t *node);
-int cb_copy_clv_traversal(pll_utree_t *node);
-int cb_branch_healthy(pll_utree_t *tree);
-int cb_erase_data(pll_utree_t *tree);
+int cb_full_traversal(pll_unode_t *node);
+int cb_partial_traversal(pll_unode_t *node);
+int cb_copy_clv_traversal(pll_unode_t *node);
+int cb_branch_healthy(pll_unode_t *tree);
+void cb_erase_data(void *data);
 
 pll_partition_t *pllext_partition_clone(pll_partition_t *rhs);
 

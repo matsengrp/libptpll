@@ -7,33 +7,24 @@
 #include <tuple>
 #include <vector>
 
-// pll.h is missing a header guard
-#ifndef LIBPLL_PLL_H_
-#define LIBPLL_PLL_H_
 #include <libpll/pll.h>
-#endif
 
 #include "model_parameters.hpp"
 #include "pll_util.hpp"
 
 namespace pt { namespace pll {
 
-Partition::Partition(pll_utree_t* tree, unsigned int tip_node_count,
+Partition::Partition(pll_utree_t* tree,
                      const ModelParameters& parameters,
                      const std::vector<std::string>& labels,
                      const std::vector<std::string>& sequences) :
-    tip_node_count_(tip_node_count),
+    tip_node_count_(tree->tip_count),
     partition_(nullptr, &pll_partition_destroy),
     sumtable_(nullptr)
 {
-  // TODO: accepting tip_node_count as a constructor parameter is
-  //       redundant, since it's also the number of labels and
-  //       sequences. might be useful as a sanity check, but the
-  //       caller could be in charge of that...
-
-  // FIXME: the variable tip_node_count shadows the member function
-  //        tip_node_count() here. I'm okay with this for now as the
-  //        variable is not long for this world.
+  // TODO: check tree->tip_count against the number of labels and
+  //       sequences. it's currently done in SetTipStates() but makes
+  //       more sense here
 
   // tree is already parsed
 
@@ -95,7 +86,8 @@ void Partition::SetModelParameters(const ModelParameters& parameters)
 
   pll_compute_gamma_cats(parameters.alpha,
                          rate_cats.size(),
-                         rate_cats.data());
+                         rate_cats.data(),
+                         PLL_GAMMA_RATES_MEAN);
 
   // set frequencies at model with index 0 (we currently have only one model).
   pll_set_frequencies(partition_.get(), 0, parameters.frequencies.data());
@@ -122,16 +114,13 @@ void Partition::SetTipStates(pll_utree_t* tree,
     throw std::invalid_argument("Unexpected number of tip nodes supplied");
   }
 
-  // obtain an array of pointers to tip nodes
-  std::vector<pll_utree_t*> tip_nodes(tip_node_count_, nullptr);
-  pll_utree_query_tipnodes(tree, tip_nodes.data());
-
   std::map<std::string, unsigned int> tip_ids;
 
   // populate a hash table with tree tip labels
   for (unsigned int i = 0; i < tip_node_count_; ++i) {
-    std::string label = tip_nodes[i]->label;
-    unsigned int tip_clv_index = tip_nodes[i]->clv_index;
+    // the first tip_node_count_ nodes in tree->nodes are the tips
+    std::string label = tree->nodes[i]->label;
+    unsigned int tip_clv_index = tree->nodes[i]->clv_index;
 
     bool inserted;
     std::tie(std::ignore, inserted) = tip_ids.emplace(label, tip_clv_index);
@@ -178,7 +167,7 @@ void Partition::FreeScratchBuffers()
   }
 }
 
-double Partition::LogLikelihood(pll_utree_t* tree, double* per_site_lnl)
+double Partition::LogLikelihood(pll_unode_t* tree, double* per_site_lnl)
 {
   double lnl = pll_compute_edge_loglikelihood(
       partition_.get(), tree->clv_index, tree->scaler_index,
@@ -188,16 +177,18 @@ double Partition::LogLikelihood(pll_utree_t* tree, double* per_site_lnl)
   return lnl;
 }
 
-unsigned int Partition::TraversalUpdate(pll_utree_t* root, TraversalType type)
+unsigned int Partition::TraversalUpdate(pll_unode_t* root, TraversalType type)
 {
   unsigned int traversal_size;
   int status;
 
   if (type == TraversalType::FULL) {
-    status = pll_utree_traverse(root, cb_full_traversal, travbuffer_.data(),
+    status = pll_utree_traverse(root, PLL_TREE_TRAVERSE_POSTORDER,
+                                cb_full_traversal, travbuffer_.data(),
                                 &traversal_size);
   } else if (type == TraversalType::PARTIAL) {
-    status = pll_utree_traverse(root, cb_partial_traversal, travbuffer_.data(),
+    status = pll_utree_traverse(root, PLL_TREE_TRAVERSE_POSTORDER,
+                                cb_partial_traversal, travbuffer_.data(),
                                 &traversal_size);
   } else {
     throw std::invalid_argument("Invalid traversal type");
@@ -233,7 +224,7 @@ unsigned int Partition::TraversalUpdate(pll_utree_t* root, TraversalType type)
   return ops_count;
 }
 
-void Partition::UpdateBranchLength(pll_utree_t* node, double length)
+void Partition::UpdateBranchLength(pll_unode_t* node, double length)
 {
   // Update current branch lengths.
   node->length = length;
@@ -246,14 +237,15 @@ void Partition::UpdateBranchLength(pll_utree_t* node, double length)
                            &(node->length), 1);
 }
 
-double Partition::OptimizeBranch(pll_utree_t* node)
+double Partition::OptimizeBranch(pll_unode_t* node)
 {
-  pll_utree_t *parent = node;
-  pll_utree_t *child = node->back;
+  pll_unode_t *parent = node;
+  pll_unode_t *child = node->back;
 
   // Compute the sumtable for the particular branch once before proceeding with
   // the optimization.
   pll_update_sumtable(partition_.get(), parent->clv_index, child->clv_index,
+                      parent->scaler_index, child->scaler_index,
                       params_indices_.data(), sumtable_);
 
   double len = node->length;
@@ -306,16 +298,17 @@ double Partition::OptimizeBranch(pll_utree_t* node)
   return len;
 }
 
-void Partition::OptimizeAllBranchesOnce(pll_utree_t* tree)
+void Partition::OptimizeAllBranchesOnce(pll_unode_t* tree)
 {
-  std::vector<pll_utree_t*> nodes(node_count(), nullptr);
+  std::vector<pll_unode_t*> nodes(node_count(), nullptr);
   unsigned int nodes_found;
 
   // Traverse the entire tree and collect nodes using a callback
   // function that returns 1 for every node visited. Some of these
   // nodes will be tips, in which case we operate on node->back (the
   // tip's parent) instead of node; see below.
-  if (!pll_utree_traverse(tree, [](pll_utree_t*) { return 1; }, nodes.data(),
+  if (!pll_utree_traverse(tree, PLL_TREE_TRAVERSE_POSTORDER,
+                          [](pll_unode_t*) { return 1; }, nodes.data(),
                           &nodes_found)) {
     throw std::invalid_argument("OptimizeAllBranches() requires an inner node");
   }
@@ -343,7 +336,7 @@ void Partition::OptimizeAllBranchesOnce(pll_utree_t* tree)
   TraversalUpdate(tree, TraversalType::PARTIAL);
 }
 
-void Partition::OptimizeAllBranches(pll_utree_t* tree)
+void Partition::OptimizeAllBranches(pll_unode_t* tree)
 {
   // TODO: Why are we doing a full traversal here instead of partial?
   TraversalUpdate(tree, TraversalType::FULL);

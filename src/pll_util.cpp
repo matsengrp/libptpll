@@ -9,11 +9,7 @@
 #include <tuple>
 #include <vector>
 
-// pll.h is missing a header guard
-#ifndef LIBPLL_PLL_H_
-#define LIBPLL_PLL_H_
 #include <libpll/pll.h>
-#endif
 
 /// @file pll_util.cpp
 /// @brief Utilities for interfacing with libpll.
@@ -25,7 +21,7 @@
 namespace pt { namespace pll {
 
 // A callback function for testing if a tree has nonzero branch lengths.
-int cb_branch_healthy(pll_utree_t *tree) {
+int cb_branch_healthy(pll_unode_t *tree) {
   if (!tree->length)
     return 0;
 
@@ -45,7 +41,7 @@ bool TreeHealthy(pll_utree_t *tree) {
 }
 
 // A callback function for performing full and partial traversals.
-int cb_traversal(pll_utree_t *node, TraversalType type) {
+int cb_traversal(pll_unode_t *node, TraversalType type) {
   node_info_t *node_info;
 
   /* if we don't want tips in the traversal we must return 0 here. For now,
@@ -97,19 +93,19 @@ int cb_traversal(pll_utree_t *node, TraversalType type) {
 }
 
 // A callback function for performing a full traversal.
-int cb_full_traversal(pll_utree_t *node)
+int cb_full_traversal(pll_unode_t *node)
 {
   return cb_traversal(node, TraversalType::FULL);
 }
 
 // A callback function for performing a partial traversal.
-int cb_partial_traversal(pll_utree_t *node)
+int cb_partial_traversal(pll_unode_t *node)
 {
   return cb_traversal(node, TraversalType::PARTIAL);
 }
 
 // callback function for deep copying clv_valid values after cloning.
-int cb_copy_clv_traversal(pll_utree_t *node) {
+int cb_copy_clv_traversal(pll_unode_t *node) {
 
   node_info_t *node_info;
 
@@ -140,13 +136,15 @@ int cb_copy_clv_traversal(pll_utree_t *node) {
 
   return 1;
 }
-int cb_erase_data(pll_utree_t *tree) {
-  if (tree->data) {
-    free(tree->data);
-    free(tree->next->data);
-    free(tree->next->next->data);
-  }
-  return 1;
+
+// we don't use pll_utree_every() to destroy node data any more.
+// pll_utree_destroy() now accepts a callback for destroying node
+// data. pll_utree_destroy() will check to see if the data pointer is
+// non-null as well as handle the bookkeeping necessary for freeing
+// cycles of inner nodes, etc. the only thing we need to do now is
+// free the data itself.
+void cb_erase_data(void* data) {
+    free(data);
 }
 
 /// @brief "Clone" a pll_partition_t object.

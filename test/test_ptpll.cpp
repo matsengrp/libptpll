@@ -19,28 +19,28 @@ TEST_CASE("partition operations are correct", "[partition]")
   std::string fasta_path("test-data/tiny/newton.fasta");
   std::string raxml_path("test-data/tiny/RAxML_info.newton");
 
-  unsigned int tip_node_count;
-  pll_utree_t* tree = pll_utree_parse_newick(newick_path.c_str(),
-                                             &tip_node_count);
+  pll_utree_t* tree = pll_utree_parse_newick(newick_path.c_str());
 
   std::vector<std::string> labels;
   std::vector<std::string> sequences;
-  pt::pll::ParseFasta(fasta_path, tip_node_count, labels, sequences);
+  pt::pll::ParseFasta(fasta_path, tree->tip_count, labels, sequences);
 
   pt::pll::ModelParameters parameters = pt::pll::ParseRaxmlInfo(raxml_path);
 
-  pt::pll::Partition partition(tree, tip_node_count, parameters, labels, sequences);
-  partition.TraversalUpdate(tree, pt::pll::TraversalType::FULL);
+  pt::pll::Partition partition(tree, parameters, labels, sequences);
+
+  pll_unode_t* node = tree->nodes[tree->tip_count + tree->inner_count - 1];
+  partition.TraversalUpdate(node, pt::pll::TraversalType::FULL);
 
   SECTION("log-likelihoods are computed correctly")
   {
-    REQUIRE(partition.LogLikelihood(tree) == Approx(-33.387713));
+    REQUIRE(partition.LogLikelihood(node) == Approx(-33.387713));
   }
 
   SECTION("branch lengths are optimized correctly")
   {
-    double original_length = tree->length;
-    double optimized_length = partition.OptimizeBranch(tree);
+    double original_length = node->length;
+    double optimized_length = partition.OptimizeBranch(node);
 
     // verify that the length changed
     REQUIRE(original_length != Approx(optimized_length));
@@ -49,25 +49,27 @@ TEST_CASE("partition operations are correct", "[partition]")
     REQUIRE(optimized_length == Approx(2.607098));
 
     // verify that the tree was modified
-    REQUIRE(tree->length == optimized_length);
-    REQUIRE(tree->back->length == optimized_length);
+    REQUIRE(node->length == optimized_length);
+    REQUIRE(node->back->length == optimized_length);
   }
 
   SECTION("partitions initialized with a different node order are equivalent")
   {
     // clone the tree in such a way that the tips returned by
     // pll_utree_query_tipnodes() are in a different order
-    pll_utree_t* other_tree = pll_utree_clone(tree->back->next->next);
+    pll_unode_t* other_node = pll_utree_graph_clone(node)->back->next->next;
+    pll_utree_t* other_tree = pll_utree_wraptree(other_node, tree->tip_count);
+    pll_utree_every(other_tree, pt::pll::cb_copy_clv_traversal);
 
-    pt::pll::Partition other_partition(other_tree, tip_node_count, parameters,
+    pt::pll::Partition other_partition(other_tree, parameters,
                                        labels, sequences);
-    other_partition.TraversalUpdate(other_tree, pt::pll::TraversalType::FULL);
+    other_partition.TraversalUpdate(other_node, pt::pll::TraversalType::FULL);
 
-    REQUIRE(other_partition.LogLikelihood(other_tree) ==
-            Approx(partition.LogLikelihood(tree)));
+    REQUIRE(other_partition.LogLikelihood(other_node) ==
+            Approx(partition.LogLikelihood(node)));
 
-    pll_utree_destroy(other_tree);
+    pll_utree_destroy(other_tree, pt::pll::cb_erase_data);
   }
 
-  pll_utree_destroy(tree);
+  pll_utree_destroy(tree, pt::pll::cb_erase_data);
 }
