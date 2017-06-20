@@ -339,6 +339,10 @@ void Partition::OptimizeAllBranchesOnce(pll_unode_t* tree)
 void Partition::OptimizeAllBranches(pll_unode_t* tree)
 {
   // TODO: Why are we doing a full traversal here instead of partial?
+  //
+  //       Note that code in pt has come to rely upon this function
+  //       performing a full traversal, so if this traversal is ever
+  //       changed, the relevant pt code should be examined closely.
   TraversalUpdate(tree, TraversalType::FULL);
   double loglike_prev = LogLikelihood(tree);
 
