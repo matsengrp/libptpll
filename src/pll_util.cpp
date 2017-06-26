@@ -300,4 +300,19 @@ unsigned int ParseFasta(std::string path, unsigned int seq_count,
   return (unsigned int)sites;
 }
 
+void InvalidateEdgeClvs(pll_unode_t* node)
+{
+  node_info_t* node_info;
+
+  if (node->data) {
+    node_info = static_cast<node_info_t*>(node->data);
+    node_info->clv_valid = 0;
+  }
+
+  if (node->back->data) {
+    node_info = static_cast<node_info_t*>(node->back->data);
+    node_info->clv_valid = 0;
+  }
+}
+
 } } // namespace pt::pll

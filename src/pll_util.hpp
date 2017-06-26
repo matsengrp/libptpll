@@ -36,6 +36,8 @@ unsigned int ParseFasta(std::string path, unsigned int seq_count,
                         std::vector<std::string> &headers_out,
                         std::vector<std::string> &seqdata_out);
 
+void InvalidateEdgeClvs(pll_unode_t* node);
+
 } } // namespace pt::pll
 
 #endif // PT_PLL_UTIL_HPP_
