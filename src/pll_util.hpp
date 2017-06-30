@@ -38,6 +38,8 @@ unsigned int ParseFasta(std::string path, unsigned int seq_count,
 
 void InvalidateEdgeClvs(pll_unode_t* node);
 
+void SynchronizeTipIndices(pll_utree_t* src_tree, pll_utree_t* dest_tree);
+
 } } // namespace pt::pll
 
 #endif // PT_PLL_UTIL_HPP_

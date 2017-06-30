@@ -315,4 +315,44 @@ void InvalidateEdgeClvs(pll_unode_t* node)
   }
 }
 
+void SynchronizeTipIndices(pll_utree_t* src_tree, pll_utree_t* dest_tree)
+{
+  if (src_tree->tip_count != dest_tree->tip_count) {
+    throw std::invalid_argument("Number of tips differs in source and destination");
+  }
+
+  std::map<std::string, pll_unode_t*> src_tips;
+
+  for (unsigned int i = 0; i < src_tree->tip_count; ++i) {
+    pll_unode_t* node = src_tree->nodes[i];
+    std::string label = node->label;
+
+    bool inserted;
+    std::tie(std::ignore, inserted) = src_tips.emplace(label, node);
+
+    if (!inserted) {
+      throw std::invalid_argument("Error inserting tip label " + label
+                                  + " into map (possibly a duplicate)");
+    }
+  }
+
+  for (unsigned int i = 0; i < src_tree->tip_count; ++i) {
+    pll_unode_t* dest_node = dest_tree->nodes[i];
+    std::string label = dest_node->label;
+
+    auto iter = src_tips.find(label);
+    if (iter == src_tips.end()) {
+      throw std::invalid_argument("Tip with label " + label +
+                                  " does not appear in source tree");
+    }
+
+    pll_unode_t* src_node = iter->second;
+
+    dest_node->node_index = src_node->node_index;
+    dest_node->clv_index = src_node->clv_index;
+    dest_node->pmatrix_index = src_node->pmatrix_index;
+    dest_node->scaler_index = src_node->scaler_index;
+  }
+}
+
 } } // namespace pt::pll
