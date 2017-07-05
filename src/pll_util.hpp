@@ -36,6 +36,8 @@ unsigned int ParseFasta(std::string path, unsigned int seq_count,
                         std::vector<std::string> &headers_out,
                         std::vector<std::string> &seqdata_out);
 
+std::vector<pll_utree_t*> ParseMultiNewick(const std::string& filename);
+
 void InvalidateEdgeClvs(pll_unode_t* node);
 
 void SynchronizeTipIndices(pll_utree_t* src_tree, pll_utree_t* dest_tree);

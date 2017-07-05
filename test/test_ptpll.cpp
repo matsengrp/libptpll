@@ -73,3 +73,46 @@ TEST_CASE("partition operations are correct", "[partition]")
 
   pll_utree_destroy(tree, pt::pll::cb_erase_data);
 }
+
+TEST_CASE("utility functions work correctly", "[util]")
+{
+  SECTION("pt::pll::ParseMultiNewick()") {
+    SECTION("with a properly formed file") {
+      std::string newick_path("test-data/util/two_peaks.nw");
+
+      std::vector<pll_utree_t*> trees = pt::pll::ParseMultiNewick(newick_path);
+
+      CHECK(trees.size() == 2);
+
+      for (auto tree : trees) {
+        REQUIRE(tree != nullptr);
+        pll_utree_destroy(tree, nullptr);
+      }
+    }
+
+    SECTION("with extra empty lines in file") {
+      std::string newick_path("test-data/util/two_peaks_extra_line.nw");
+
+      std::vector<pll_utree_t*> trees = pt::pll::ParseMultiNewick(newick_path);
+
+      CHECK(trees.size() == 2);
+
+      for (auto tree : trees) {
+        REQUIRE(tree != nullptr);
+        pll_utree_destroy(tree, nullptr);
+      }
+    }
+
+    SECTION("with extra non-empty whitespace lines in file") {
+      std::string newick_path("test-data/util/two_peaks_extra_whitespace.nw");
+
+      REQUIRE_THROWS_AS(pt::pll::ParseMultiNewick(newick_path), std::runtime_error);
+    }
+
+    SECTION("with extra garbage in file") {
+      std::string newick_path("test-data/util/two_peaks_extra_garbage.nw");
+
+      REQUIRE_THROWS_AS(pt::pll::ParseMultiNewick(newick_path), std::runtime_error);
+    }
+  }
+}

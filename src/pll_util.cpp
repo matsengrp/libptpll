@@ -1,5 +1,6 @@
 #include "pll_util.hpp"
 
+#include <algorithm>
 #include <fstream>
 #include <iomanip>
 #include <map>
@@ -298,6 +299,37 @@ unsigned int ParseFasta(std::string path, unsigned int seq_count,
   }
 
   return (unsigned int)sites;
+}
+
+std::vector<pll_utree_t*> ParseMultiNewick(const std::string& filename)
+{
+  std::ifstream ifs(filename);
+
+  // this function can handle empty lines in the multi-Newick file,
+  // but anything else that fails to be parsed by libpll will result
+  // in an exception being thrown.
+
+  std::vector<pll_utree_t*> trees;
+  for (std::string line; std::getline(ifs, line); ) {
+    if (line.empty()) {
+      continue;
+    }
+
+    pll_utree_t* tree = pll_utree_parse_newick_string(line.c_str());
+
+    if (!tree) {
+      for (auto t : trees) {
+        pll_utree_destroy(t, nullptr);
+      }
+
+      throw std::runtime_error("Failed to parse '" + line +
+                               "' as a Newick string");
+    }
+
+    trees.emplace_back(tree);
+  }
+
+  return trees;
 }
 
 void InvalidateEdgeClvs(pll_unode_t* node)
