@@ -329,6 +329,15 @@ std::vector<pll_utree_t*> ParseMultiNewick(const std::string& filename)
     trees.emplace_back(tree);
   }
 
+  // partitions maintain state related to the tree tip node/partition
+  // data indices, which means that if we want to use the same
+  // partition for evaluating these trees, their tips need to be
+  // synchronized based on the tip labels.
+
+  for (size_t i = 1; i < trees.size(); ++i) {
+    SynchronizeTipIndices(trees[0], trees[i]);
+  }
+
   return trees;
 }
 
