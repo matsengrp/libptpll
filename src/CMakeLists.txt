@@ -3,7 +3,6 @@ set(PT_SRC
   pll_partition.cpp
   pll_util.cpp)
 
-add_library(ptpll SHARED ${PT_SRC})
-target_link_libraries(ptpll pll)
-
 add_library(ptpll_static STATIC ${PT_SRC})
+add_dependencies(ptpll_static pll_modules)
+target_link_libraries(ptpll_static pll)

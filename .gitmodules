@@ -1,0 +1,4 @@
+[submodule "lib/pll-modules"]
+	path = lib/pll-modules
+	url = https://github.com/ddarriba/pll-modules.git
+	branch = dev

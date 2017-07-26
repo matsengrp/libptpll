@@ -15,5 +15,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -pg -Wall -Wextra -Wshadow -pedan
 
 enable_testing()
 
+add_subdirectory(lib)
 add_subdirectory(src)
 add_subdirectory(test)

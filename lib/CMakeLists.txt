@@ -1,0 +1,63 @@
+include(ExternalProject)
+
+# install prefix for external dependencies
+set(PREFIX_DIR ${CMAKE_CURRENT_BINARY_DIR}/_prefix)
+
+# create the prefix's include directory to avoid an issue with imported targets
+# https://gitlab.kitware.com/cmake/cmake/issues/15052
+file(MAKE_DIRECTORY ${PREFIX_DIR}/include)
+
+#
+# libpll and pll-modules
+#
+
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/pll-modules
+  DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+set(PLL_SRC_DIR ${CMAKE_CURRENT_BINARY_DIR}/pll-modules)
+
+ExternalProject_Add(pll_modules
+  PREFIX ${PLL_SRC_DIR}
+  SOURCE_DIR ${PLL_SRC_DIR}
+  BINARY_DIR ${PLL_SRC_DIR}
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ./install-with-libpll.sh ${PREFIX_DIR})
+
+set(PLL_LIB_DIR ${PREFIX_DIR}/lib)
+set(PLL_INCLUDE_DIR ${PREFIX_DIR}/include)
+
+add_library(pll STATIC IMPORTED GLOBAL)
+set_target_properties(pll PROPERTIES
+  IMPORTED_LOCATION "${PLL_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}pll${CMAKE_STATIC_LIBRARY_SUFFIX}"
+  INTERFACE_INCLUDE_DIRECTORIES "${PLL_INCLUDE_DIR}")
+
+add_library(pll_algorithm STATIC IMPORTED GLOBAL)
+set_target_properties(pll_algorithm PROPERTIES
+  IMPORTED_LOCATION "${PLL_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}pll_algorithm${CMAKE_STATIC_LIBRARY_SUFFIX}"
+  INTERFACE_INCLUDE_DIRECTORIES "${PLL_INCLUDE_DIR}")
+
+add_library(pll_binary STATIC IMPORTED GLOBAL)
+set_target_properties(pll_binary PROPERTIES
+  IMPORTED_LOCATION "${PLL_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}pll_binary${CMAKE_STATIC_LIBRARY_SUFFIX}"
+  INTERFACE_INCLUDE_DIRECTORIES "${PLL_INCLUDE_DIR}")
+
+add_library(pll_msa STATIC IMPORTED GLOBAL)
+set_target_properties(pll_msa PROPERTIES
+  IMPORTED_LOCATION "${PLL_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}pll_msa${CMAKE_STATIC_LIBRARY_SUFFIX}"
+  INTERFACE_INCLUDE_DIRECTORIES "${PLL_INCLUDE_DIR}")
+
+add_library(pll_optimize STATIC IMPORTED GLOBAL)
+set_target_properties(pll_optimize PROPERTIES
+  IMPORTED_LOCATION "${PLL_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}pll_optimize${CMAKE_STATIC_LIBRARY_SUFFIX}"
+  INTERFACE_INCLUDE_DIRECTORIES "${PLL_INCLUDE_DIR}")
+
+add_library(pll_tree STATIC IMPORTED GLOBAL)
+set_target_properties(pll_tree PROPERTIES
+  IMPORTED_LOCATION "${PLL_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}pll_tree${CMAKE_STATIC_LIBRARY_SUFFIX}"
+  INTERFACE_INCLUDE_DIRECTORIES "${PLL_INCLUDE_DIR}")
+
+add_library(pll_util STATIC IMPORTED GLOBAL)
+set_target_properties(pll_util PROPERTIES
+  IMPORTED_LOCATION "${PLL_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}pll_util${CMAKE_STATIC_LIBRARY_SUFFIX}"
+  INTERFACE_INCLUDE_DIRECTORIES "${PLL_INCLUDE_DIR}")
