@@ -37,7 +37,7 @@ TEST_CASE("partition operations are correct", "[partition]")
     REQUIRE(partition.LogLikelihood(node) == Approx(-33.387713));
   }
 
-  SECTION("branch lengths are optimized correctly")
+  SECTION("single branch lengths are optimized correctly")
   {
     double original_length = node->length;
     double optimized_length = partition.OptimizeBranch(node);
@@ -69,6 +69,69 @@ TEST_CASE("partition operations are correct", "[partition]")
             Approx(partition.LogLikelihood(node)));
 
     pll_utree_destroy(other_tree, pt::pll::cb_erase_data);
+  }
+
+  pll_utree_destroy(tree, pt::pll::cb_erase_data);
+}
+
+std::map<pll_unode_t*, double> ResetBranchLengths(pll_unode_t* root,
+                                                  unsigned int node_count,
+                                                  double value)
+{
+  std::vector<pll_unode_t*> travbuffer(node_count);
+  unsigned int traversal_size;
+
+  pll_utree_traverse(root, PLL_TREE_TRAVERSE_POSTORDER,
+                     [](pll_unode_t*) { return 1; }, travbuffer.data(),
+                     &traversal_size);
+
+  std::map<pll_unode_t*, double> original_lengths;
+
+  for (auto node : travbuffer) {
+    if (node != travbuffer[traversal_size - 1]->back) {
+      original_lengths[node] = node->length;
+
+      node->length = value;
+      node->back->length = value;
+    }
+  }
+
+  return original_lengths;
+}
+
+TEST_CASE("multiple branch lengths are optimized correctly", "[optimization]")
+{
+  std::string newick_path("test-data/five/RAxML_bestTree.five");
+  std::string fasta_path("test-data/five/five.fasta");
+  std::string raxml_path("test-data/five/RAxML_info.five");
+
+  pll_utree_t* tree = pll_utree_parse_newick(newick_path.c_str());
+
+  std::vector<std::string> labels;
+  std::vector<std::string> sequences;
+  pt::pll::ParseFasta(fasta_path, tree->tip_count, labels, sequences);
+
+  pt::pll::ModelParameters parameters = pt::pll::ParseRaxmlInfo(raxml_path);
+
+  pt::pll::Partition partition(tree, parameters, labels, sequences);
+  pll_unode_t* root = tree->nodes[tree->tip_count + tree->inner_count - 1];
+
+  double default_length = 1.0;
+  std::map<pll_unode_t*, double> original_lengths =
+      ResetBranchLengths(root, partition.node_count(), default_length);
+  partition.TraversalUpdate(root, pt::pll::TraversalType::FULL);
+
+  SECTION("branch lengths on the whole tree are optimized correctly")
+  {
+    partition.OptimizeAllBranches(root);
+
+    for (auto& kv : original_lengths) {
+      pll_unode_t* node = kv.first;
+      double original_length = original_lengths[node];
+
+      CHECK(node->length == Approx(original_length).epsilon(1e-3));
+      CHECK(node->back->length == Approx(original_length).epsilon(1e-3));
+    }
   }
 
   pll_utree_destroy(tree, pt::pll::cb_erase_data);
