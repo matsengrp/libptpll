@@ -60,6 +60,7 @@ class Partition
   double OptimizeBranch(pll_unode_t* node);
   void OptimizeAllBranchesOnce(pll_unode_t* tree);
   void OptimizeAllBranches(pll_unode_t* tree);
+  void OptimizeBranchNeighborhood(pll_unode_t* node, int radius);
 
   unsigned int tip_node_count() const;
   unsigned int inner_node_count() const;

@@ -9,6 +9,10 @@
 
 #include <libpll/pll.h>
 
+extern "C" {
+#include <libpll/pll_optimize.h>
+}
+
 #include "model_parameters.hpp"
 #include "pll_util.hpp"
 
@@ -365,6 +369,63 @@ void Partition::OptimizeAllBranches(pll_unode_t* tree)
     loglike = LogLikelihood(tree);
     i++;
   }
+}
+
+void Partition::OptimizeBranchNeighborhood(pll_unode_t* node, int radius)
+{
+  // TODO: passing an optimization radius of 0 to the pll-modules
+  //       local optimization function appears to be broken. see
+  //       https://github.com/ddarriba/pll-modules/issues/15
+  if (radius <= 0) {
+    throw std::invalid_argument("optimization radius must be positive");
+  }
+
+  // TODO: should we do a partial traversal here?
+  TraversalUpdate(node, TraversalType::FULL);
+
+  // TODO: So the local branch optimization in pll-modules doesn't
+  //       behave quite as I expected it to. Given the following tree:
+  //
+  //     a        b
+  //      \      /
+  //       \    /
+  //      f *--- g
+  //       /    \
+  //      /      \
+  // e___/ h      c
+  //     \
+  //      \
+  //       d
+  //
+  // The starred node is the one getting passed to the optimization
+  // function, and would correspond to the edge across which an NNI
+  // move was made (`f->back` points at `g`). With a radius of 1, I
+  // expected five branches to be optimized, `f-g`, `f-a`, `g-b`,
+  // `g-c`, and `f-h`. Instead, the neighborhood appears to be defined
+  // by the node itself, rather than the edge, so a radius of 1 around
+  // node `f` optimizes the three edges `f-g`, `f-a`, and `f-h`. We
+  // want what I expected, not what it's doing, right?
+  //
+  // I think I could get the expected behavior out of it by calling
+  // the optimization function twice, once on `f` and once on `g`, but
+  // then the edges toward the center will end up getting optimized
+  // more than once, which gets to be a bigger problem as the radius
+  // increases.
+  //
+  // For now, we're going to leave it as is, with the caveat that if
+  // you want to optimize the four branches around the center,
+  // you'll need to use at least a radius of 2, and accept the fact
+  // that the optimization will be lopsided toward the input node.
+
+  pllmod_opt_optimize_branch_lengths_local(partition_.get(),
+                                           node,
+                                           params_indices_.data(),
+                                           PLLMOD_OPT_MIN_BRANCH_LEN,
+                                           PLLMOD_OPT_MAX_BRANCH_LEN,
+                                           EPSILON,
+                                           MAX_ITER,
+                                           radius,
+                                           1 /* keep_update */);
 }
 
 } } // namespace pt::pll

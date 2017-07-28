@@ -134,6 +134,105 @@ TEST_CASE("multiple branch lengths are optimized correctly", "[optimization]")
     }
   }
 
+  // get to a more interesting inner node
+  root = root->next->back;
+
+  SECTION("branch lengths in a neighborhood are optimized correctly") {
+    SECTION("a non-positive radius is not accepted") {
+      CHECK_THROWS_AS(partition.OptimizeBranchNeighborhood(root, -1),
+                      std::invalid_argument);
+      CHECK_THROWS_AS(partition.OptimizeBranchNeighborhood(root, 0),
+                      std::invalid_argument);
+    }
+
+    SECTION("when the optimization radius is 1") {
+      //std::cout << "\n\n";
+      //pll_utree_show_ascii(root, PLL_UTREE_SHOW_BRANCH_LENGTH);
+
+      partition.OptimizeBranchNeighborhood(root, 1);
+
+      //std::cout << "\n\n";
+      //pll_utree_show_ascii(root, PLL_UTREE_SHOW_BRANCH_LENGTH);
+
+      for (auto& kv : original_lengths) {
+        pll_unode_t* node = kv.first;
+
+        /*
+
+         |
+         +---+ 0.000115
+         |   |
+         |   +--- 1.000000
+         |   |
+         |   +--- 1.000000
+         |
+         +--- 0.044303
+         |
+         +---+ 0.319134
+             |
+             +--- 1.000000
+             |
+             +--- 1.000000
+
+        */
+
+        double expected_length;
+        if (node == root) {
+          expected_length = 0.000115;
+        } else if (node == root->next->back) {
+          expected_length = 0.044303;
+        } else if (node == root->next->next->back) {
+          expected_length = 0.319134;
+        } else {
+          expected_length = default_length;
+        }
+
+        CHECK(node->length == Approx(expected_length));
+        CHECK(node->back->length == Approx(expected_length));
+      }
+    }
+
+    SECTION("when the optimization radius is 2") {
+      // a radius of 2 covers the whole tree, so we expect to recover
+      // all the original branch lengths
+
+      //std::cout << "\n\n";
+      //pll_utree_show_ascii(root, PLL_UTREE_SHOW_BRANCH_LENGTH);
+
+      partition.OptimizeBranchNeighborhood(root, 2);
+
+      //std::cout << "\n\n";
+      //pll_utree_show_ascii(root, PLL_UTREE_SHOW_BRANCH_LENGTH);
+
+      /*
+
+       |
+       +---+ 0.007016
+       |   |
+       |   +--- 0.053478
+       |   |
+       |   +--- 0.030236
+       |
+       +--- 0.033170
+       |
+       +---+ 0.074179
+           |
+           +--- 0.038065
+           |
+           +--- 0.060858
+
+      */
+
+      for (auto& kv : original_lengths) {
+        pll_unode_t* node = kv.first;
+        double original_length = original_lengths[node];
+
+        CHECK(node->length == Approx(original_length).epsilon(1e-3));
+        CHECK(node->back->length == Approx(original_length).epsilon(1e-3));
+      }
+    }
+  }
+
   pll_utree_destroy(tree, pt::pll::cb_erase_data);
 }
 
