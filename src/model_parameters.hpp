@@ -8,6 +8,7 @@ namespace pt { namespace pll {
 
 struct ModelParameters {
   double alpha;
+  unsigned int rate_categories;
   std::vector<double> frequencies;
   std::vector<double> subst_params;
 };

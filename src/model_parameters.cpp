@@ -56,16 +56,16 @@ ModelParameters ParseRaxmlInfo(const std::string& path)
     throw std::invalid_argument("Wrong number of rate values.");
   }
 
-  // we'll use RATE_CATS rate categories, and currently initialize them to 0
-  std::vector<double> rate_cats(RATE_CATS, 0.0);
-
   // initialize the alpha value
   pos1 = contents.find("alpha[0]: ");
   pos2 = contents.find(' ', pos1 + 10);
   sstr = contents.substr(pos1 + 10, pos2 - pos1 - 10);
   double alpha = stod(sstr);
 
-  ModelParameters parameters{alpha, frequencies, subst_params};
+  // TODO: defaulting to 4 rate categories to match old RATE_CATS
+  unsigned int rate_categories = 4;
+
+  ModelParameters parameters{alpha, rate_categories, frequencies, subst_params};
   return parameters;
 }
 

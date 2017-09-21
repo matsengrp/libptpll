@@ -50,7 +50,7 @@ Partition::Partition(pll_utree_t* tree,
                            site_count,          // sites
                            1,                   // rate_matrices
                            branch_count(),      // prob_matrices
-                           RATE_CATS,           // rate_cats
+                           parameters.rate_categories,  // rate_cats
                            inner_node_count(),  // scale_buffers
                            ARCH_FLAGS),         // attributes
       &pll_partition_destroy);
@@ -63,7 +63,7 @@ Partition::Partition(pll_utree_t* tree,
   // TODO: is there a better place for this? as far as I can tell from
   //       the docs, this array is never updated, so it could probably
   //       be a const vector and initialized in the initializer list
-  params_indices_.assign(RATE_CATS, 0);
+  params_indices_.assign(parameters.rate_categories, 0);
 
   AllocateScratchBuffers();
 }
@@ -74,7 +74,7 @@ Partition::Partition(Partition&& rhs) :
     sumtable_(nullptr)
 {
   partition_ = std::move(rhs.partition_);
-  params_indices_.assign(RATE_CATS, 0);
+  params_indices_.assign(partition_->rate_cats, 0);
 
   AllocateScratchBuffers();
 }
@@ -86,7 +86,7 @@ Partition::~Partition()
 
 void Partition::SetModelParameters(const ModelParameters& parameters)
 {
-  std::vector<double> rate_cats(RATE_CATS, 0.0);
+  std::vector<double> rate_cats(parameters.rate_categories, 0.0);
 
   pll_compute_gamma_cats(parameters.alpha,
                          rate_cats.size(),

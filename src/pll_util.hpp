@@ -14,7 +14,6 @@
 namespace pt { namespace pll {
 
 const unsigned int STATES = 4;
-const unsigned int RATE_CATS = 4;
 const unsigned int ALIGNMENT = PLL_ALIGNMENT_AVX;
 const unsigned int ARCH_FLAGS = PLL_ATTRIB_ARCH_AVX;
 
