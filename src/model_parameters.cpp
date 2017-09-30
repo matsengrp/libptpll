@@ -65,7 +65,13 @@ ModelParameters ParseRaxmlInfo(const std::string& path)
   // TODO: defaulting to 4 rate categories to match old RATE_CATS
   unsigned int rate_categories = 4;
 
-  ModelParameters parameters{alpha, rate_categories, frequencies, subst_params};
+  // initialize the model name
+  pos1 = contents.find("Substitution Matrix: ");
+  pos2 = contents.find('\n', pos1);
+  sstr = contents.substr(pos1 + 21, pos2 - pos1 - 21);
+  std::string model_name = sstr;
+
+  ModelParameters parameters{model_name, frequencies, subst_params, rate_categories, alpha};
   return parameters;
 }
 

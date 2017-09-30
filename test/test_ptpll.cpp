@@ -278,3 +278,86 @@ TEST_CASE("utility functions work correctly", "[util]")
     }
   }
 }
+
+TEST_CASE("model optimization works correctly", "[model]")
+{
+  std::string newick_path("test-data/five/RAxML_bestTree.five");
+  std::string fasta_path("test-data/five/five.fasta");
+  std::string raxml_path("test-data/five/RAxML_info.five");
+
+  pll_utree_t* tree = pll_utree_parse_newick(newick_path.c_str());
+
+  std::vector<std::string> labels;
+  std::vector<std::string> sequences;
+  pt::pll::ParseFasta(fasta_path, tree->tip_count, labels, sequences);
+
+  pt::pll::ModelParameters parameters = pt::pll::ParseRaxmlInfo(raxml_path);
+
+  std::fill(parameters.frequencies.begin(),
+            parameters.frequencies.end(),
+            0.25);
+
+  std::fill(parameters.subst_params.begin(),
+            parameters.subst_params.end(),
+            1.0);
+
+  parameters.alpha = 1.0;
+
+  pt::pll::Partition partition(tree, parameters, labels, sequences);
+  pll_unode_t* root = tree->nodes[tree->tip_count + tree->inner_count - 1];
+  partition.TraversalUpdate(root, pt::pll::TraversalType::FULL);
+
+  CHECK(partition.LogLikelihood(root) == Approx(-3950.22));
+
+  partition.OptimizeModel(root);
+
+  CHECK(partition.LogLikelihood(root) == Approx(-3738.98));
+}
+
+TEST_CASE("full optimization works correctly", "[optimize]")
+{
+  std::string newick_path("test-data/five/RAxML_bestTree.five");
+  std::string fasta_path("test-data/five/five.fasta");
+  std::string raxml_path("test-data/five/RAxML_info.five");
+
+  pll_utree_t* tree = pll_utree_parse_newick(newick_path.c_str());
+
+  std::vector<std::string> labels;
+  std::vector<std::string> sequences;
+  pt::pll::ParseFasta(fasta_path, tree->tip_count, labels, sequences);
+
+  pt::pll::ModelParameters parameters = pt::pll::ParseRaxmlInfo(raxml_path);
+
+  std::fill(parameters.frequencies.begin(),
+            parameters.frequencies.end(),
+            0.25);
+
+  std::fill(parameters.subst_params.begin(),
+            parameters.subst_params.end(),
+            1.0);
+
+  parameters.alpha = 1.0;
+
+  pt::pll::Partition partition(tree, parameters, labels, sequences);
+  pll_unode_t* root = tree->nodes[tree->tip_count + tree->inner_count - 1];
+
+  double default_length = 1.0;
+  std::map<pll_unode_t*, double> original_lengths =
+      ResetBranchLengths(root, partition.node_count(), default_length);
+
+  partition.TraversalUpdate(root, pt::pll::TraversalType::FULL);
+
+  CHECK(partition.LogLikelihood(root) == Approx(-6098.54));
+
+  partition.OptimizeBranchesAndModel(root);
+
+  CHECK(partition.LogLikelihood(root) == Approx(-3738.98));
+
+  for (auto& kv : original_lengths) {
+    pll_unode_t* node = kv.first;
+    double original_length = original_lengths[node];
+
+    CHECK(node->length == Approx(original_length).epsilon(1e-3));
+    CHECK(node->back->length == Approx(original_length).epsilon(1e-3));
+  }
+}

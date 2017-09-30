@@ -1,5 +1,6 @@
 #include "pll_partition.hpp"
 
+#include <cmath>
 #include <map>
 #include <memory>
 #include <stdexcept>
@@ -11,6 +12,7 @@
 
 extern "C" {
 #include <libpll/pll_optimize.h>
+#include <libpll/pllmod_algorithm.h>
 }
 
 #include "model_parameters.hpp"
@@ -24,6 +26,7 @@ Partition::Partition(pll_utree_t* tree,
                      const std::vector<std::string>& sequences) :
     tip_node_count_(tree->tip_count),
     partition_(nullptr, &pll_partition_destroy),
+    model_info_(nullptr, &pllmod_util_model_destroy),
     sumtable_(nullptr)
 {
   // TODO: check tree->tip_count against the number of labels and
@@ -71,9 +74,12 @@ Partition::Partition(pll_utree_t* tree,
 Partition::Partition(Partition&& rhs) :
     tip_node_count_(rhs.tip_node_count_),
     partition_(nullptr, &pll_partition_destroy),
+    model_info_(nullptr, &pllmod_util_model_destroy),
     sumtable_(nullptr)
 {
   partition_ = std::move(rhs.partition_);
+  model_info_ = std::move(rhs.model_info_);
+
   params_indices_.assign(partition_->rate_cats, 0);
 
   AllocateScratchBuffers();
@@ -86,12 +92,12 @@ Partition::~Partition()
 
 void Partition::SetModelParameters(const ModelParameters& parameters)
 {
-  std::vector<double> rate_cats(parameters.rate_categories, 0.0);
+  model_info_ = ModelInfoPtr(pllmod_util_model_info_dna(parameters.model_name.c_str()),
+                             &pllmod_util_model_destroy);
 
-  pll_compute_gamma_cats(parameters.alpha,
-                         rate_cats.size(),
-                         rate_cats.data(),
-                         PLL_GAMMA_RATES_MEAN);
+  if (!model_info_.get()) {
+    throw std::invalid_argument("Invalid model name " + parameters.model_name);
+  }
 
   // set frequencies at model with index 0 (we currently have only one model).
   pll_set_frequencies(partition_.get(), 0, parameters.frequencies.data());
@@ -100,6 +106,13 @@ void Partition::SetModelParameters(const ModelParameters& parameters)
   pll_set_subst_params(partition_.get(), 0, parameters.subst_params.data());
 
   // set rate categories
+  std::vector<double> rate_cats(parameters.rate_categories, 0.0);
+
+  pll_compute_gamma_cats(parameters.alpha,
+                         rate_cats.size(),
+                         rate_cats.data(),
+                         PLL_GAMMA_RATES_MEAN);
+
   pll_set_category_rates(partition_.get(), rate_cats.data());
 }
 
@@ -426,6 +439,109 @@ void Partition::OptimizeBranchNeighborhood(pll_unode_t* node, int radius)
                                            MAX_ITER,
                                            radius,
                                            1 /* keep_update */);
+}
+
+double Partition::OptimizeModelOnce(pll_unode_t* tree)
+{
+  double tolerance = 1e-3;
+  double lnl;
+
+  //
+  // substitution rates
+  //
+
+  lnl = -1.0 * pllmod_algo_opt_subst_rates(partition_.get(),
+                                           tree,
+                                           0, /* params_index */
+                                           params_indices_.data(),
+                                           model_info_->rate_sym,
+                                           PLLMOD_OPT_MIN_SUBST_RATE,
+                                           PLLMOD_OPT_MAX_SUBST_RATE,
+                                           PLLMOD_ALGO_BFGS_FACTR,
+                                           tolerance);
+
+  //
+  // stationary frequencies
+  //
+  // TODO: this should only be done if the frequencies are actually
+  //       free to vary
+
+  lnl = -1.0 * pllmod_algo_opt_frequencies(partition_.get(),
+                                           tree,
+                                           0, /* params_index */
+                                           params_indices_.data(),
+                                           PLLMOD_ALGO_BFGS_FACTR,
+                                           tolerance);
+
+  //
+  // gamma rate categories
+  //
+
+  if (partition_->rate_cats > 1) {
+    double alpha;
+
+    lnl = -1.0 * pllmod_algo_opt_alpha(partition_.get(),
+                                       tree,
+                                       params_indices_.data(),
+                                       PLLMOD_OPT_MIN_ALPHA,
+                                       PLLMOD_OPT_MAX_ALPHA,
+                                       &alpha,
+                                       tolerance);
+  }
+
+  return lnl;
+}
+
+double Partition::OptimizeModel(pll_unode_t* tree)
+{
+  // TODO: should we do a partial traversal here?
+  TraversalUpdate(tree, TraversalType::FULL);
+  double prev_lnl = LogLikelihood(tree);
+
+  double curr_lnl = OptimizeModelOnce(tree);
+
+  size_t i = 0;
+  while (std::abs(prev_lnl - curr_lnl) > EPSILON && i < MAX_ITER) {
+    prev_lnl = curr_lnl;
+    curr_lnl = OptimizeModelOnce(tree);
+
+    ++i;
+  }
+
+  return curr_lnl;
+}
+
+double Partition::OptimizeBranchesAndModel(pll_unode_t* tree)
+{
+  // TODO: should we do a partial traversal here?
+  TraversalUpdate(tree, TraversalType::FULL);
+  double prev_lnl = LogLikelihood(tree);
+
+  OptimizeAllBranchesOnce(tree);
+  OptimizeModelOnce(tree);
+
+  TraversalUpdate(tree, TraversalType::PARTIAL);
+  double curr_lnl = LogLikelihood(tree);
+
+  size_t i = 0;
+  while (std::abs(prev_lnl - curr_lnl) > EPSILON && i < MAX_ITER) {
+    prev_lnl = curr_lnl;
+
+    OptimizeAllBranchesOnce(tree);
+    OptimizeModelOnce(tree);
+
+    // the pll-modules parameter optimization functions called in
+    // OptimizeModelOnce() handle updating partials and probability
+    // matrices for us, so we don't have to recompute everything with
+    // a full traversal
+
+    TraversalUpdate(tree, TraversalType::PARTIAL);
+    curr_lnl = LogLikelihood(tree);
+
+    ++i;
+  }
+
+  return curr_lnl;
 }
 
 } } // namespace pt::pll

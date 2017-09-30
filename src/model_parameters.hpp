@@ -7,10 +7,13 @@
 namespace pt { namespace pll {
 
 struct ModelParameters {
-  double alpha;
-  unsigned int rate_categories;
+  std::string model_name;
+
   std::vector<double> frequencies;
   std::vector<double> subst_params;
+
+  unsigned int rate_categories;
+  double alpha;
 };
 
 ModelParameters ParseRaxmlInfo(const std::string& path);

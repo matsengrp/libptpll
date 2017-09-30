@@ -7,6 +7,10 @@
 
 #include <libpll/pll.h>
 
+extern "C" {
+#include <libpll/pllmod_util.h>
+}
+
 #include "model_parameters.hpp"
 #include "pll_util.hpp"
 
@@ -21,9 +25,12 @@ class Partition
  private:
   using PartitionPtr = std::unique_ptr<pll_partition_t,
                                        decltype(&pll_partition_destroy)>;
+  using ModelInfoPtr = std::unique_ptr<pllmod_subst_model_t,
+                                       decltype(&pllmod_util_model_destroy)>;
 
   const unsigned int tip_node_count_;
   PartitionPtr partition_;
+  ModelInfoPtr model_info_;
   std::vector<unsigned int> params_indices_;
 
   // scratch buffers for TraversalUpdate()
@@ -61,6 +68,11 @@ class Partition
   void OptimizeAllBranchesOnce(pll_unode_t* tree);
   void OptimizeAllBranches(pll_unode_t* tree);
   void OptimizeBranchNeighborhood(pll_unode_t* node, int radius);
+
+  double OptimizeModelOnce(pll_unode_t* tree);
+  double OptimizeModel(pll_unode_t* tree);
+
+  double OptimizeBranchesAndModel(pll_unode_t* tree);
 
   unsigned int tip_node_count() const;
   unsigned int inner_node_count() const;
