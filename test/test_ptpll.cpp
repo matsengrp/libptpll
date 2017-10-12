@@ -25,9 +25,9 @@ TEST_CASE("partition operations are correct", "[partition]")
   std::vector<std::string> sequences;
   pt::pll::ParseFasta(fasta_path, tree->tip_count, labels, sequences);
 
-  pt::pll::ModelParameters parameters = pt::pll::ParseRaxmlInfo(raxml_path);
+  pt::pll::Model model = pt::pll::ParseRaxmlInfo(raxml_path);
 
-  pt::pll::Partition partition(tree, parameters, labels, sequences);
+  pt::pll::Partition partition(tree, model, labels, sequences);
 
   pll_unode_t* node = tree->nodes[tree->tip_count + tree->inner_count - 1];
   partition.TraversalUpdate(node, pt::pll::TraversalType::FULL);
@@ -61,7 +61,7 @@ TEST_CASE("partition operations are correct", "[partition]")
     pll_utree_t* other_tree = pll_utree_wraptree(other_node, tree->tip_count);
     pll_utree_every(other_tree, pt::pll::cb_copy_clv_traversal);
 
-    pt::pll::Partition other_partition(other_tree, parameters,
+    pt::pll::Partition other_partition(other_tree, model,
                                        labels, sequences);
     other_partition.TraversalUpdate(other_node, pt::pll::TraversalType::FULL);
 
@@ -111,9 +111,9 @@ TEST_CASE("multiple branch lengths are optimized correctly", "[optimization]")
   std::vector<std::string> sequences;
   pt::pll::ParseFasta(fasta_path, tree->tip_count, labels, sequences);
 
-  pt::pll::ModelParameters parameters = pt::pll::ParseRaxmlInfo(raxml_path);
+  pt::pll::Model model = pt::pll::ParseRaxmlInfo(raxml_path);
 
-  pt::pll::Partition partition(tree, parameters, labels, sequences);
+  pt::pll::Partition partition(tree, model, labels, sequences);
   pll_unode_t* root = tree->nodes[tree->tip_count + tree->inner_count - 1];
 
   double default_length = 1.0;
@@ -291,19 +291,19 @@ TEST_CASE("model optimization works correctly", "[model]")
   std::vector<std::string> sequences;
   pt::pll::ParseFasta(fasta_path, tree->tip_count, labels, sequences);
 
-  pt::pll::ModelParameters parameters = pt::pll::ParseRaxmlInfo(raxml_path);
+  pt::pll::Model model = pt::pll::ParseRaxmlInfo(raxml_path);
 
-  std::fill(parameters.frequencies.begin(),
-            parameters.frequencies.end(),
+  std::fill(model.frequencies.begin(),
+            model.frequencies.end(),
             0.25);
 
-  std::fill(parameters.subst_params.begin(),
-            parameters.subst_params.end(),
+  std::fill(model.subst_params.begin(),
+            model.subst_params.end(),
             1.0);
 
-  parameters.alpha = 1.0;
+  model.alpha = 1.0;
 
-  pt::pll::Partition partition(tree, parameters, labels, sequences);
+  pt::pll::Partition partition(tree, model, labels, sequences);
   pll_unode_t* root = tree->nodes[tree->tip_count + tree->inner_count - 1];
   partition.TraversalUpdate(root, pt::pll::TraversalType::FULL);
 
@@ -326,19 +326,19 @@ TEST_CASE("full optimization works correctly", "[optimize]")
   std::vector<std::string> sequences;
   pt::pll::ParseFasta(fasta_path, tree->tip_count, labels, sequences);
 
-  pt::pll::ModelParameters parameters = pt::pll::ParseRaxmlInfo(raxml_path);
+  pt::pll::Model model = pt::pll::ParseRaxmlInfo(raxml_path);
 
-  std::fill(parameters.frequencies.begin(),
-            parameters.frequencies.end(),
+  std::fill(model.frequencies.begin(),
+            model.frequencies.end(),
             0.25);
 
-  std::fill(parameters.subst_params.begin(),
-            parameters.subst_params.end(),
+  std::fill(model.subst_params.begin(),
+            model.subst_params.end(),
             1.0);
 
-  parameters.alpha = 1.0;
+  model.alpha = 1.0;
 
-  pt::pll::Partition partition(tree, parameters, labels, sequences);
+  pt::pll::Partition partition(tree, model, labels, sequences);
   pll_unode_t* root = tree->nodes[tree->tip_count + tree->inner_count - 1];
 
   double default_length = 1.0;

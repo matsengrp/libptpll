@@ -6,7 +6,7 @@
 
 namespace pt { namespace pll {
 
-struct ModelParameters {
+struct Model {
   std::string model_name;
 
   std::vector<double> frequencies;
@@ -16,7 +16,7 @@ struct ModelParameters {
   double alpha;
 };
 
-ModelParameters ParseRaxmlInfo(const std::string& path);
+Model ParseRaxmlInfo(const std::string& path);
 
 } } // namespace pt::pll
 

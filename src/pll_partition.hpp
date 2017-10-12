@@ -45,7 +45,7 @@ class Partition
  public:
   // based on old Partition constructor in partition.cpp
   Partition(pll_utree_t* tree,
-            const ModelParameters& parameters,
+            const Model& model,
             const std::vector<std::string>& labels,
             const std::vector<std::string>& sequences);
 
@@ -83,7 +83,7 @@ class Partition
   // based on SetModelParameters() in pll-utils.cpp, but the
   // parameters struct will be populated elsewhere -- no need to parse
   // the RAxML info file here
-  void SetModelParameters(const ModelParameters& parameters);
+  void SetModel(const Model& model);
 
   // based on EquipPartitionWithData() in pll-utils.cpp
   void SetTipStates(pll_utree_t* tree, const std::vector<std::string>& labels,

@@ -21,7 +21,7 @@ extern "C" {
 namespace pt { namespace pll {
 
 Partition::Partition(pll_utree_t* tree,
-                     const ModelParameters& parameters,
+                     const Model& model,
                      const std::vector<std::string>& labels,
                      const std::vector<std::string>& sequences) :
     tip_node_count_(tree->tip_count),
@@ -53,20 +53,20 @@ Partition::Partition(pll_utree_t* tree,
                            site_count,          // sites
                            1,                   // rate_matrices
                            branch_count(),      // prob_matrices
-                           parameters.rate_categories,  // rate_cats
+                           model.rate_categories,  // rate_cats
                            inner_node_count(),  // scale_buffers
                            ARCH_FLAGS),         // attributes
       &pll_partition_destroy);
 
   // TODO: try/catch?
   // TODO: should these be static member functions? does it matter?
-  SetModelParameters(parameters);
+  SetModel(model);
   SetTipStates(tree, labels, sequences);
 
   // TODO: is there a better place for this? as far as I can tell from
   //       the docs, this array is never updated, so it could probably
   //       be a const vector and initialized in the initializer list
-  params_indices_.assign(parameters.rate_categories, 0);
+  params_indices_.assign(model.rate_categories, 0);
 
   AllocateScratchBuffers();
 }
@@ -90,25 +90,25 @@ Partition::~Partition()
   FreeScratchBuffers();
 }
 
-void Partition::SetModelParameters(const ModelParameters& parameters)
+void Partition::SetModel(const Model& model)
 {
-  model_info_ = ModelInfoPtr(pllmod_util_model_info_dna(parameters.model_name.c_str()),
+  model_info_ = ModelInfoPtr(pllmod_util_model_info_dna(model.model_name.c_str()),
                              &pllmod_util_model_destroy);
 
   if (!model_info_.get()) {
-    throw std::invalid_argument("Invalid model name " + parameters.model_name);
+    throw std::invalid_argument("Invalid model name " + model.model_name);
   }
 
   // set frequencies at model with index 0 (we currently have only one model).
-  pll_set_frequencies(partition_.get(), 0, parameters.frequencies.data());
+  pll_set_frequencies(partition_.get(), 0, model.frequencies.data());
 
   // set 6 substitution parameters at model with index 0
-  pll_set_subst_params(partition_.get(), 0, parameters.subst_params.data());
+  pll_set_subst_params(partition_.get(), 0, model.subst_params.data());
 
   // set rate categories
-  std::vector<double> rate_cats(parameters.rate_categories, 0.0);
+  std::vector<double> rate_cats(model.rate_categories, 0.0);
 
-  pll_compute_gamma_cats(parameters.alpha,
+  pll_compute_gamma_cats(model.alpha,
                          rate_cats.size(),
                          rate_cats.data(),
                          PLL_GAMMA_RATES_MEAN);

@@ -21,7 +21,7 @@ std::vector<std::string> ssplit(const std::string &s, char delim) {
     return tokens;
 }
 
-ModelParameters ParseRaxmlInfo(const std::string& path)
+Model ParseRaxmlInfo(const std::string& path)
 {
   std::ifstream file(path);
   std::string read;
@@ -71,8 +71,8 @@ ModelParameters ParseRaxmlInfo(const std::string& path)
   sstr = contents.substr(pos1 + 21, pos2 - pos1 - 21);
   std::string model_name = sstr;
 
-  ModelParameters parameters{model_name, frequencies, subst_params, rate_categories, alpha};
-  return parameters;
+  Model model{model_name, frequencies, subst_params, rate_categories, alpha};
+  return model;
 }
 
 } } // namespace pt::pll
