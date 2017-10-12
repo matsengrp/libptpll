@@ -1,4 +1,4 @@
-#include "model_parameters.hpp"
+#include "model.hpp"
 
 #include <fstream>
 #include <sstream>

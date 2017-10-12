@@ -9,7 +9,7 @@
 #include <libpll/pll.h>
 #endif
 
-#include "model_parameters.hpp"
+#include "model.hpp"
 #include "pll_partition.hpp"
 #include "pll_util.hpp"
 

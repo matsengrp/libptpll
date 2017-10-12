@@ -1,5 +1,5 @@
-#ifndef PT_PLL_MODEL_PARAMETERS_HPP_
-#define PT_PLL_MODEL_PARAMETERS_HPP_
+#ifndef PT_PLL_MODEL_HPP_
+#define PT_PLL_MODEL_HPP_
 
 #include <string>
 #include <vector>
@@ -20,4 +20,4 @@ Model ParseRaxmlInfo(const std::string& path);
 
 } } // namespace pt::pll
 
-#endif // PT_PLL_MODEL_PARAMETERS_HPP_
+#endif // PT_PLL_MODEL_HPP_

@@ -1,5 +1,5 @@
 set(PT_SRC
-  model_parameters.cpp
+  model.cpp
   pll_partition.cpp
   pll_util.cpp)
 

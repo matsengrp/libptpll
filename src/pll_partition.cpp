@@ -15,7 +15,7 @@ extern "C" {
 #include <libpll/pllmod_algorithm.h>
 }
 
-#include "model_parameters.hpp"
+#include "model.hpp"
 #include "pll_util.hpp"
 
 namespace pt { namespace pll {
