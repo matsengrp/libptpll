@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include <libpll/pll.h>
+
 #include "pll_util.hpp"
 
 namespace pt { namespace pll {
@@ -21,7 +23,7 @@ std::vector<std::string> ssplit(const std::string &s, char delim) {
     return tokens;
 }
 
-Model ParseRaxmlInfo(const std::string& path)
+Model ParseRaxmlInfo(const std::string& path, size_t rate_categories)
 {
   std::ifstream file(path);
   std::string read;
@@ -62,8 +64,12 @@ Model ParseRaxmlInfo(const std::string& path)
   sstr = contents.substr(pos1 + 10, pos2 - pos1 - 10);
   double alpha = stod(sstr);
 
-  // TODO: defaulting to 4 rate categories to match old RATE_CATS
-  unsigned int rate_categories = 4;
+  std::vector<double> category_rates(rate_categories);
+
+  pll_compute_gamma_cats(alpha,
+                         category_rates.size(),
+                         category_rates.data(),
+                         PLL_GAMMA_RATES_MEAN);
 
   // initialize the model name
   pos1 = contents.find("Substitution Matrix: ");
@@ -71,7 +77,7 @@ Model ParseRaxmlInfo(const std::string& path)
   sstr = contents.substr(pos1 + 21, pos2 - pos1 - 21);
   std::string model_name = sstr;
 
-  Model model{model_name, frequencies, subst_params, rate_categories, alpha};
+  Model model{model_name, frequencies, subst_params, category_rates};
   return model;
 }
 

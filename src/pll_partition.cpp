@@ -53,7 +53,7 @@ Partition::Partition(pll_utree_t* tree,
                            site_count,          // sites
                            1,                   // rate_matrices
                            branch_count(),      // prob_matrices
-                           model.rate_categories,  // rate_cats
+                           model.category_rates.size(),  // rate_cats
                            inner_node_count(),  // scale_buffers
                            ARCH_FLAGS),         // attributes
       &pll_partition_destroy);
@@ -66,7 +66,7 @@ Partition::Partition(pll_utree_t* tree,
   // TODO: is there a better place for this? as far as I can tell from
   //       the docs, this array is never updated, so it could probably
   //       be a const vector and initialized in the initializer list
-  params_indices_.assign(model.rate_categories, 0);
+  params_indices_.assign(model.category_rates.size(), 0);
 
   AllocateScratchBuffers();
 }
@@ -105,15 +105,12 @@ void Partition::SetModel(const Model& model)
   // set 6 substitution parameters at model with index 0
   pll_set_subst_params(partition_.get(), 0, model.subst_params.data());
 
-  // set rate categories
-  std::vector<double> rate_cats(model.rate_categories, 0.0);
+  // set category rates
+  if (model.category_rates.size() != partition_->rate_cats) {
+    throw std::invalid_argument("Invalid number of category rates");
+  }
 
-  pll_compute_gamma_cats(model.alpha,
-                         rate_cats.size(),
-                         rate_cats.data(),
-                         PLL_GAMMA_RATES_MEAN);
-
-  pll_set_category_rates(partition_.get(), rate_cats.data());
+  pll_set_category_rates(partition_.get(), model.category_rates.data());
 }
 
 void Partition::SetTipStates(pll_utree_t* tree,

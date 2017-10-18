@@ -11,12 +11,11 @@ struct Model {
 
   std::vector<double> frequencies;
   std::vector<double> subst_params;
-
-  unsigned int rate_categories;
-  double alpha;
+  std::vector<double> category_rates;
 };
 
-Model ParseRaxmlInfo(const std::string& path);
+// default number of rate categories set to 4 to match RAxML
+Model ParseRaxmlInfo(const std::string& path, size_t rate_categories = 4);
 
 } } // namespace pt::pll
 

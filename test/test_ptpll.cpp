@@ -301,7 +301,11 @@ TEST_CASE("model optimization works correctly", "[model]")
             model.subst_params.end(),
             1.0);
 
-  model.alpha = 1.0;
+  double alpha = 1.0;
+  pll_compute_gamma_cats(alpha,
+                         model.category_rates.size(),
+                         model.category_rates.data(),
+                         PLL_GAMMA_RATES_MEAN);
 
   pt::pll::Partition partition(tree, model, labels, sequences);
   pll_unode_t* root = tree->nodes[tree->tip_count + tree->inner_count - 1];
@@ -336,7 +340,11 @@ TEST_CASE("full optimization works correctly", "[optimize]")
             model.subst_params.end(),
             1.0);
 
-  model.alpha = 1.0;
+  double alpha = 1.0;
+  pll_compute_gamma_cats(alpha,
+                         model.category_rates.size(),
+                         model.category_rates.data(),
+                         PLL_GAMMA_RATES_MEAN);
 
   pt::pll::Partition partition(tree, model, labels, sequences);
   pll_unode_t* root = tree->nodes[tree->tip_count + tree->inner_count - 1];
