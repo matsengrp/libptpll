@@ -74,16 +74,15 @@ class Partition
 
   double OptimizeBranchesAndModel(pll_unode_t* tree);
 
+  Model GetModel() const;
+  void SetModel(const Model& model);
+
   unsigned int tip_node_count() const;
   unsigned int inner_node_count() const;
   unsigned int node_count() const;
   unsigned int branch_count() const;
 
  private:
-  // based on SetModelParameters() in pll-utils.cpp, but the
-  // parameters struct will be populated elsewhere -- no need to parse
-  // the RAxML info file here
-  void SetModel(const Model& model);
 
   // based on EquipPartitionWithData() in pll-utils.cpp
   void SetTipStates(pll_utree_t* tree, const std::vector<std::string>& labels,

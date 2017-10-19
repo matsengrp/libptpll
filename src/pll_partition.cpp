@@ -1,5 +1,6 @@
 #include "pll_partition.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <map>
 #include <memory>
@@ -111,6 +112,49 @@ void Partition::SetModel(const Model& model)
   }
 
   pll_set_category_rates(partition_.get(), model.category_rates.data());
+}
+
+Model Partition::GetModel() const
+{
+  //
+  // model name
+  //
+
+  std::string model_name = model_info_->name;
+
+  //
+  // equilibrium frequencies
+  //
+
+  unsigned int states = partition_->states;
+
+  std::vector<double> frequencies(states);
+  double* p_frequencies = partition_->frequencies[0];
+
+  std::copy(p_frequencies, p_frequencies + frequencies.size(),
+            frequencies.begin());
+
+  //
+  // substitution rates
+  //
+
+  std::vector<double> subst_params((states * (states - 1)) / 2);
+  double* p_subst_params = partition_->subst_params[0];
+
+  std::copy(p_subst_params, p_subst_params + subst_params.size(),
+            subst_params.begin());
+
+  //
+  // category rates
+  //
+
+  std::vector<double> category_rates(partition_->rate_cats);
+  double* p_rates = partition_->rates;
+
+  std::copy(p_rates, p_rates + category_rates.size(),
+            category_rates.begin());
+
+  return Model{model_name, frequencies, subst_params, category_rates};
 }
 
 void Partition::SetTipStates(pll_utree_t* tree,

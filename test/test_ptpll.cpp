@@ -369,3 +369,22 @@ TEST_CASE("full optimization works correctly", "[optimize]")
     CHECK(node->back->length == Approx(original_length).epsilon(1e-3));
   }
 }
+
+TEST_CASE("model getter works correctly", "[model_getter]")
+{
+  std::string newick_path("test-data/five/RAxML_bestTree.five");
+  std::string fasta_path("test-data/five/five.fasta");
+  std::string raxml_path("test-data/five/RAxML_info.five");
+
+  pll_utree_t* tree = pll_utree_parse_newick(newick_path.c_str());
+
+  std::vector<std::string> labels;
+  std::vector<std::string> sequences;
+  pt::pll::ParseFasta(fasta_path, tree->tip_count, labels, sequences);
+
+  pt::pll::Model model = pt::pll::ParseRaxmlInfo(raxml_path);
+
+  pt::pll::Partition partition(tree, model, labels, sequences);
+
+  CHECK(partition.GetModel() == model);
+}
