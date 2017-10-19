@@ -370,6 +370,13 @@ TEST_CASE("full optimization works correctly", "[optimize]")
   }
 }
 
+bool CompareModels(const pt::pll::Model& lhs, const pt::pll::Model& rhs)
+{
+  return (lhs.frequencies == rhs.frequencies &&
+          lhs.subst_params == rhs.subst_params &&
+          lhs.category_rates == rhs.category_rates);
+}
+
 TEST_CASE("model getter works correctly", "[model_getter]")
 {
   std::string newick_path("test-data/five/RAxML_bestTree.five");
@@ -386,5 +393,5 @@ TEST_CASE("model getter works correctly", "[model_getter]")
 
   pt::pll::Partition partition(tree, model, labels, sequences);
 
-  CHECK(partition.GetModel() == model);
+  CHECK(CompareModels(partition.GetModel(), model));
 }
