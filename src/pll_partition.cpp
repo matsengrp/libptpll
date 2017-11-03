@@ -519,7 +519,7 @@ double Partition::OptimizeModelOnce(pll_unode_t* tree)
   //
 
   if (partition_->rate_cats > 1) {
-    double alpha;
+    double alpha = (PLLMOD_OPT_MIN_ALPHA + PLLMOD_OPT_MAX_ALPHA) / 2.0;
 
     lnl = -1.0 * pllmod_algo_opt_alpha(partition_.get(),
                                        tree,
