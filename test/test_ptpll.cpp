@@ -1,6 +1,7 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
+#include <algorithm>
 #include <string>
 
 // pll.h is missing a header guard
@@ -318,7 +319,7 @@ TEST_CASE("model optimization works correctly", "[model]")
   CHECK(partition.LogLikelihood(root) == Approx(-3738.98));
 }
 
-TEST_CASE("full optimization works correctly", "[optimize]")
+TEST_CASE("full optimization works correctly with GTR", "[optimize_GTR]")
 {
   std::string newick_path("test-data/five/RAxML_bestTree.five");
   std::string fasta_path("test-data/five/five.fasta");
@@ -360,6 +361,54 @@ TEST_CASE("full optimization works correctly", "[optimize]")
   partition.OptimizeBranchesAndModel(root);
 
   CHECK(partition.LogLikelihood(root) == Approx(-3738.98));
+
+  for (auto& kv : original_lengths) {
+    pll_unode_t* node = kv.first;
+    double original_length = original_lengths[node];
+
+    CHECK(node->length == Approx(original_length).epsilon(1e-3));
+    CHECK(node->back->length == Approx(original_length).epsilon(1e-3));
+  }
+}
+
+TEST_CASE("full optimization works correctly with JC69", "[optimize_JC69]")
+{
+  std::string newick_path("test-data/five_JC/RAxML_bestTree.five_JC");
+  std::string fasta_path("test-data/five_JC/five.fasta");
+  std::string raxml_path("test-data/five_JC/RAxML_info.five_JC");
+
+  pll_utree_t* tree = pll_utree_parse_newick(newick_path.c_str());
+
+  std::vector<std::string> labels;
+  std::vector<std::string> sequences;
+  pt::pll::ParseFasta(fasta_path, tree->tip_count, labels, sequences);
+
+  pt::pll::Model model = pt::pll::ParseRaxmlInfo(raxml_path);
+
+  pt::pll::Partition partition(tree, model, labels, sequences);
+  pll_unode_t* root = tree->nodes[tree->tip_count + tree->inner_count - 1];
+
+  double default_length = 1.0;
+  std::map<pll_unode_t*, double> original_lengths =
+      ResetBranchLengths(root, partition.node_count(), default_length);
+
+  partition.TraversalUpdate(root, pt::pll::TraversalType::FULL);
+
+  CHECK(partition.LogLikelihood(root) == Approx(-4724.72));
+
+  partition.OptimizeBranchesAndModel(root);
+
+  CHECK(partition.LogLikelihood(root) == Approx(-3936.11));
+
+  pt::pll::Model optimized_model = partition.GetModel();
+
+  CHECK(std::all_of(optimized_model.frequencies.begin(),
+                    optimized_model.frequencies.end(),
+                    [](double x) { return (x == 0.25); }));
+
+  CHECK(std::all_of(optimized_model.subst_params.begin(),
+                    optimized_model.subst_params.end(),
+                    [](double x) { return (x == 1.0); }));
 
   for (auto& kv : original_lengths) {
     pll_unode_t* node = kv.first;

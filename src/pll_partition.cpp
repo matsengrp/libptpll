@@ -504,15 +504,26 @@ double Partition::OptimizeModelOnce(pll_unode_t* tree)
   //
   // stationary frequencies
   //
-  // TODO: this should only be done if the frequencies are actually
-  //       free to vary
 
-  lnl = -1.0 * pllmod_algo_opt_frequencies(partition_.get(),
-                                           tree,
-                                           0, /* params_index */
-                                           params_indices_.data(),
-                                           PLLMOD_ALGO_BFGS_FACTR,
-                                           tolerance);
+  // if any of the model info's frequency symmetry values are
+  // non-zero, we optimize the frequencies.
+  //
+  // TODO: this is a hacky substitute for
+  //       pllmod_algo_opt_frequencies() not accepting the model info
+  //       freq_sym array, as the pllmod_algo_opt_subst_rates()
+  //       function does above with the model info rate_sym array.
+
+  if (std::any_of(model_info_->freq_sym,
+                  model_info_->freq_sym + model_info_->states,
+                  [](int x) { return x != 0; }))
+  {
+    lnl = -1.0 * pllmod_algo_opt_frequencies(partition_.get(),
+                                             tree,
+                                             0, /* params_index */
+                                             params_indices_.data(),
+                                             PLLMOD_ALGO_BFGS_FACTR,
+                                             tolerance);
+  }
 
   //
   // gamma rate categories

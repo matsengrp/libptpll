@@ -1,0 +1,72 @@
+
+
+Using BFGS method to optimize GTR rate parameters, to disable this specify "--no-bfgs" 
+
+
+
+This is RAxML version 8.2.9 released by Alexandros Stamatakis on July 20 2016.
+
+With greatly appreciated code contributions by:
+Andre Aberer      (HITS)
+Simon Berger      (HITS)
+Alexey Kozlov     (HITS)
+Kassian Kobert    (HITS)
+David Dao         (KIT and HITS)
+Sarah Lutteropp   (KIT and HITS)
+Nick Pattengale   (Sandia)
+Wayne Pfeiffer    (SDSC)
+Akifumi S. Tanabe (NRIFS)
+Charlie Taylor    (UF)
+
+
+Alignment has 146 distinct alignment patterns
+
+Proportion of gaps and completely undetermined characters in this alignment: 2.00%
+
+RAxML rapid hill-climbing mode
+
+Using 1 distinct models/data partitions with joint branch length optimization
+
+
+Executing 1 inferences on the original alignment using 1 distinct randomized MP trees
+
+All free model parameters will be estimated by RAxML
+GAMMA model of rate heteorgeneity, ML estimate of alpha-parameter
+
+GAMMA Model parameters will be estimated up to an accuracy of 0.1000000000 Log Likelihood units
+
+Partition: 0
+Alignment Patterns: 146
+Name: No Name Provided
+DataType: DNA
+Substitution Matrix: JC69
+
+
+
+
+RAxML was called as follows:
+
+raxmlHPC-PTHREADS -m GTRGAMMA -s five.fasta -n five_JC -p 1 --JC69 
+
+
+Partition: 0 with name: No Name Provided
+Base frequencies: 0.250 0.250 0.250 0.250 
+
+Inference[0]: Time 0.021482 GAMMA-based likelihood -3936.107797, best rearrangement setting 2
+alpha[0]: 0.294398 rates[0] ac ag at cg ct gt: 1.000000 1.000000 1.000000 1.000000 1.000000 1.000000 
+
+
+Conducting final model optimizations on all 1 trees under GAMMA-based models ....
+
+Inference[0] final GAMMA-based Likelihood: -3936.107797 tree written to file /Users/bclaywel/workspace/pt/lib/libptpll/test/test-data/five_JC/RAxML_result.five_JC
+
+
+Starting final GAMMA-based thorough Optimization on tree 0 likelihood -3936.107797 .... 
+
+Final GAMMA-based Score of best tree -3936.107797
+
+Program execution info written to /Users/bclaywel/workspace/pt/lib/libptpll/test/test-data/five_JC/RAxML_info.five_JC
+Best-scoring ML tree written to: /Users/bclaywel/workspace/pt/lib/libptpll/test/test-data/five_JC/RAxML_bestTree.five_JC
+
+Overall execution time: 0.034593 secs or 0.000010 hours or 0.000000 days
+

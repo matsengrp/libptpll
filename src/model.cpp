@@ -1,6 +1,7 @@
 #include "model.hpp"
 
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -77,8 +78,61 @@ Model ParseRaxmlInfo(const std::string& path, size_t rate_categories)
   sstr = contents.substr(pos1 + 21, pos2 - pos1 - 21);
   std::string model_name = sstr;
 
+  // adjust RAxML model names to match pll-modules
+  //
+  // TODO: expand as needed
+  if (model_name == "JC69") {
+    model_name = "JC";
+  }
+
   Model model{model_name, frequencies, subst_params, category_rates};
   return model;
+}
+
+//
+// operators
+//
+
+std::ostream& operator<<(std::ostream& os, const Model& rhs)
+{
+  std::string sep = "";
+  os << "freqs:  ";
+  for (double x : rhs.frequencies) {
+    os << sep << x;
+    sep = ", ";
+  }
+  os << "\n";
+
+  sep = "";
+  os << "params: ";
+  for (double x : rhs.subst_params) {
+    os << sep << x;
+    sep = ", ";
+  }
+  os << "\n";
+
+  sep = "";
+  os << "rates:  ";
+  for (double x : rhs.category_rates) {
+    os << sep << x;
+    sep = ", ";
+  }
+  os << "\n";
+
+  return os;
+}
+
+bool operator==(const Model& lhs, const Model& rhs)
+{
+  return (lhs.model_name == rhs.model_name &&
+          lhs.frequencies == rhs.frequencies &&
+          lhs.subst_params == rhs.subst_params &&
+          lhs.category_rates == rhs.category_rates);
+}
+
+bool operator!=(const Model& lhs, const Model& rhs)
+{
+  return !(lhs == rhs);
 }
 
 } } // namespace pt::pll
