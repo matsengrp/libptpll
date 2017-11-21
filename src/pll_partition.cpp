@@ -30,15 +30,9 @@ Partition::Partition(pll_utree_t* tree,
     model_info_(nullptr, &pllmod_util_model_destroy),
     sumtable_(nullptr)
 {
-  // TODO: check tree->tip_count against the number of labels and
-  //       sequences. it's currently done in SetTipStates() but makes
-  //       more sense here
-
   // tree is already parsed
 
   // check that tree is healthy (i.e., every branch has a length)
-  //
-  // TODO: should the caller be responsible for checking the tree?
   if (!TreeHealthy(tree)) {
     throw std::invalid_argument("Tree is missing branch lengths");
   }
@@ -59,14 +53,9 @@ Partition::Partition(pll_utree_t* tree,
                            ARCH_FLAGS),         // attributes
       &pll_partition_destroy);
 
-  // TODO: try/catch?
-  // TODO: should these be static member functions? does it matter?
   SetModel(model);
   SetTipStates(tree, labels, sequences);
 
-  // TODO: is there a better place for this? as far as I can tell from
-  //       the docs, this array is never updated, so it could probably
-  //       be a const vector and initialized in the initializer list
   params_indices_.assign(model.category_rates.size(), 0);
 
   AllocateScratchBuffers();
@@ -165,9 +154,6 @@ void Partition::SetTipStates(pll_utree_t* tree,
     throw std::invalid_argument("Number of labels does not match number of sequences");
   }
 
-  // TODO: if tip_node_count_ is inferred from the size of the labels
-  //       or sequences vector in the constructor, this check becomes
-  //       redundant
   if (tip_node_count_ != labels.size()) {
     throw std::invalid_argument("Unexpected number of tip nodes supplied");
   }
