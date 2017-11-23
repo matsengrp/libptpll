@@ -370,14 +370,6 @@ void Partition::OptimizeAllBranchesOnce(pll_unode_t* tree)
     TraversalUpdate(node, TraversalType::PARTIAL);
     OptimizeBranch(node);
   }
-
-  // Leave the tree and partition in the same state we found it.
-  //
-  // TODO: This assumes that the CLVs were originally oriented toward
-  // the node pointed to by tree -- this may not be the case, or the
-  // caller may not care. Maybe we should just place the
-  // responsibility on the caller?
-  TraversalUpdate(tree, TraversalType::PARTIAL);
 }
 
 void Partition::OptimizeAllBranches(pll_unode_t* tree)
@@ -392,22 +384,19 @@ void Partition::OptimizeAllBranches(pll_unode_t* tree)
 
   OptimizeAllBranchesOnce(tree);
 
-  // TODO: If we remove the call to TraversalUpdate() at the end of
-  //       OptimizeAllBranchesOnce(), we'll need to do a partial
-  //       traversal before computing the log-likelihood.
+  TraversalUpdate(tree, TraversalType::PARTIAL);
   double loglike = LogLikelihood(tree);
 
   unsigned int i = 0;
   while (fabs(loglike_prev - loglike) > EPSILON && i < MAX_ITER) {
-    OptimizeAllBranchesOnce(tree);
-
     loglike_prev = loglike;
 
-    // TODO: As above, if we remove the call to TraversalUpdate() at
-    //       the end of OptimizeAllBranchesOnce(), we'll need to do a
-    //       partial traversal before computing the log-likelihood.
+    OptimizeAllBranchesOnce(tree);
+
+    TraversalUpdate(tree, TraversalType::PARTIAL);
     loglike = LogLikelihood(tree);
-    i++;
+
+    ++i;
   }
 }
 
