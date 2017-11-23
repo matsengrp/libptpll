@@ -462,6 +462,8 @@ double Partition::OptimizeModelOnce(pll_unode_t* tree)
   double tolerance = 1e-3;
   double lnl;
 
+  TraversalUpdate(tree, TraversalType::PARTIAL);
+
   //
   // substitution rates
   //
