@@ -374,12 +374,7 @@ void Partition::OptimizeAllBranchesOnce(pll_unode_t* tree)
 
 void Partition::OptimizeAllBranches(pll_unode_t* tree)
 {
-  // TODO: Why are we doing a full traversal here instead of partial?
-  //
-  //       Note that code in pt has come to rely upon this function
-  //       performing a full traversal, so if this traversal is ever
-  //       changed, the relevant pt code should be examined closely.
-  TraversalUpdate(tree, TraversalType::FULL);
+  TraversalUpdate(tree, TraversalType::PARTIAL);
   double loglike_prev = LogLikelihood(tree);
 
   OptimizeAllBranchesOnce(tree);
@@ -409,8 +404,7 @@ void Partition::OptimizeBranchNeighborhood(pll_unode_t* node, int radius)
     throw std::invalid_argument("optimization radius must be positive");
   }
 
-  // TODO: should we do a partial traversal here?
-  TraversalUpdate(node, TraversalType::FULL);
+  TraversalUpdate(node, TraversalType::PARTIAL);
 
   // TODO: So the local branch optimization in pll-modules doesn't
   //       behave quite as I expected it to. Given the following tree:
@@ -523,8 +517,7 @@ double Partition::OptimizeModelOnce(pll_unode_t* tree)
 
 double Partition::OptimizeModel(pll_unode_t* tree)
 {
-  // TODO: should we do a partial traversal here?
-  TraversalUpdate(tree, TraversalType::FULL);
+  TraversalUpdate(tree, TraversalType::PARTIAL);
   double prev_lnl = LogLikelihood(tree);
 
   double curr_lnl = OptimizeModelOnce(tree);
@@ -542,8 +535,7 @@ double Partition::OptimizeModel(pll_unode_t* tree)
 
 double Partition::OptimizeBranchesAndModel(pll_unode_t* tree)
 {
-  // TODO: should we do a partial traversal here?
-  TraversalUpdate(tree, TraversalType::FULL);
+  TraversalUpdate(tree, TraversalType::PARTIAL);
   double prev_lnl = LogLikelihood(tree);
 
   OptimizeAllBranchesOnce(tree);
