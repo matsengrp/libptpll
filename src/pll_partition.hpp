@@ -72,7 +72,7 @@ class Partition
   double OptimizeModelOnce(pll_unode_t* tree);
   double OptimizeModel(pll_unode_t* tree);
 
-  double OptimizeBranchesAndModel(pll_unode_t* tree);
+  double OptimizeAllBranchesAndModel(pll_unode_t* tree);
 
   Model GetModel() const;
   void SetModel(const Model& model);

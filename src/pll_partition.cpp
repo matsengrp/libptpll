@@ -533,7 +533,7 @@ double Partition::OptimizeModel(pll_unode_t* tree)
   return curr_lnl;
 }
 
-double Partition::OptimizeBranchesAndModel(pll_unode_t* tree)
+double Partition::OptimizeAllBranchesAndModel(pll_unode_t* tree)
 {
   TraversalUpdate(tree, TraversalType::PARTIAL);
   double prev_lnl = LogLikelihood(tree);

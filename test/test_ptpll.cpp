@@ -358,7 +358,7 @@ TEST_CASE("full optimization works correctly with GTR", "[optimize_GTR]")
 
   CHECK(partition.LogLikelihood(root) == Approx(-6098.54));
 
-  partition.OptimizeBranchesAndModel(root);
+  partition.OptimizeAllBranchesAndModel(root);
 
   CHECK(partition.LogLikelihood(root) == Approx(-3738.98));
 
@@ -396,7 +396,7 @@ TEST_CASE("full optimization works correctly with JC69", "[optimize_JC69]")
 
   CHECK(partition.LogLikelihood(root) == Approx(-4724.72));
 
-  partition.OptimizeBranchesAndModel(root);
+  partition.OptimizeAllBranchesAndModel(root);
 
   CHECK(partition.LogLikelihood(root) == Approx(-3936.11));
 
