@@ -27,6 +27,11 @@ std::vector<std::string> ssplit(const std::string &s, char delim) {
 Model ParseRaxmlInfo(const std::string& path, size_t rate_categories)
 {
   std::ifstream file(path);
+
+  if (!file) {
+    throw std::invalid_argument("Error opening file " + path);
+  }
+
   std::string read;
   std::string contents;
 

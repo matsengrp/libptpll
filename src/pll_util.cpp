@@ -305,6 +305,10 @@ std::vector<pll_utree_t*> ParseMultiNewick(const std::string& filename)
 {
   std::ifstream ifs(filename);
 
+  if (!ifs) {
+    throw std::invalid_argument("Error opening file " + filename);
+  }
+
   // this function can handle empty lines in the multi-Newick file,
   // but anything else that fails to be parsed by libpll will result
   // in an exception being thrown.
