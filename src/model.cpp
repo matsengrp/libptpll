@@ -88,6 +88,8 @@ Model ParseRaxmlInfo(const std::string& path, size_t rate_categories)
   // TODO: expand as needed
   if (model_name == "JC69") {
     model_name = "JC";
+  } else if (model_name == "HKY85") {
+    model_name = "HKY";
   }
 
   Model model{model_name, frequencies, subst_params, category_rates};
