@@ -345,6 +345,11 @@ std::vector<pll_utree_t*> ParseMultiNewick(const std::string& filename)
   return trees;
 }
 
+pll_unode_t* GetVirtualRoot(pll_utree_t* tree)
+{
+  return tree->nodes[tree->tip_count + tree->inner_count - 1];
+}
+
 void InvalidateEdgeClvs(pll_unode_t* node)
 {
   node_info_t* node_info;
