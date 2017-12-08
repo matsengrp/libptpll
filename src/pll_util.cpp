@@ -401,7 +401,12 @@ void SynchronizeTipIndices(pll_utree_t* src_tree, pll_utree_t* dest_tree)
     dest_node->node_index = src_node->node_index;
     dest_node->clv_index = src_node->clv_index;
     dest_node->pmatrix_index = src_node->pmatrix_index;
+    dest_node->back->pmatrix_index = src_node->back->pmatrix_index;
     dest_node->scaler_index = src_node->scaler_index;
+  }
+
+  if (!pll_utree_check_integrity(dest_tree)) {
+    throw std::logic_error("Destination tree failed integrity check");
   }
 }
 

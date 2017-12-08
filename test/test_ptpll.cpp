@@ -278,6 +278,30 @@ TEST_CASE("utility functions work correctly", "[util]")
       REQUIRE_THROWS_AS(pt::pll::ParseMultiNewick(newick_path), std::runtime_error);
     }
   }
+
+  SECTION("pt::pll::SynchronizeTipIndices()") {
+    std::string newick_path("test-data/util/two_peaks.nw");
+
+    std::vector<pll_utree_t*> trees;
+    REQUIRE_NOTHROW(trees = pt::pll::ParseMultiNewick(newick_path));
+
+#if 0
+    int options = PLL_UTREE_SHOW_LABEL |
+                  PLL_UTREE_SHOW_CLV_INDEX |
+                  PLL_UTREE_SHOW_SCALER_INDEX |
+                  PLL_UTREE_SHOW_PMATRIX_INDEX;
+
+    pll_utree_show_ascii(pt::pll::GetVirtualRoot(trees[0]), options);
+
+    std::cerr << "\n";
+
+    pll_utree_show_ascii(pt::pll::GetVirtualRoot(trees[1]), options);
+#endif
+
+    for (auto tree : trees) {
+      pll_utree_destroy(tree, nullptr);
+    }
+  }
 }
 
 TEST_CASE("model optimization works correctly", "[model]")
