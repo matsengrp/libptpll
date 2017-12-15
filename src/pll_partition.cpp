@@ -24,8 +24,10 @@ namespace pt { namespace pll {
 Partition::Partition(pll_utree_t* tree,
                      const Model& model,
                      const std::vector<std::string>& labels,
-                     const std::vector<std::string>& sequences) :
+                     const std::vector<std::string>& sequences,
+                     bool map_mode) :
     tip_node_count_(tree->tip_count),
+    map_mode_(map_mode),
     partition_(nullptr, &pll_partition_destroy),
     model_info_(nullptr, &pllmod_util_model_destroy),
     sumtable_(nullptr)
@@ -218,6 +220,35 @@ double Partition::LogLikelihood(pll_unode_t* tree, double* per_site_lnl)
       tree->back->clv_index, tree->back->scaler_index, tree->pmatrix_index,
       params_indices_.data(), per_site_lnl);
 
+  // TODO: hacky MAP mode, doesn't update per-site values
+  if (map_mode_) {
+    double lambda = 10.0;
+
+    std::vector<pll_unode_t*> nodes(node_count(), nullptr);
+    unsigned int nodes_found;
+
+    // Traverse the entire tree and collect nodes using a callback
+    // function that returns 1 for every node visited.
+    if (!pll_utree_traverse(tree, PLL_TREE_TRAVERSE_POSTORDER,
+                            [](pll_unode_t*) { return 1; }, nodes.data(),
+                            &nodes_found)) {
+      throw std::invalid_argument("LogLikelihood() requires an inner node");
+    }
+
+    if (nodes_found != nodes.size()) {
+      throw std::invalid_argument("Unexpected number of nodes");
+    }
+
+    for (auto node : nodes) {
+      // Don't double-count the edge between tree and tree->back.
+      if (node == tree->back) {
+        continue;
+      }
+
+      lnl += std::log(lambda) - (lambda * node->length);
+    }
+  }
+
   return lnl;
 }
 
@@ -302,6 +333,13 @@ double Partition::OptimizeBranch(pll_unode_t* node)
     pll_compute_likelihood_derivatives(
         partition_.get(), parent->scaler_index, child->scaler_index, len,
         params_indices_.data(), sumtable_, &d1, &d2);
+
+    // TODO: hacky MAP mode
+    if (map_mode_) {
+      double lambda = 10.0;
+
+      d1 -= lambda;
+    }
 
     // printf("Branch length: %f log-L: %f Derivative: %f D2: %f\n", len,
     // opt_logl, d1,d2);

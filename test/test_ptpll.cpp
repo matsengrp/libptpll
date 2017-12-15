@@ -443,6 +443,64 @@ TEST_CASE("full optimization works correctly with JC69", "[optimize_JC69]")
   }
 }
 
+TEST_CASE("full optimization in MAP mode works correctly with JC69", "[optimize_map]")
+{
+  std::string newick_path("test-data/map/map_test_alpha_0.1299395.tre");
+  std::string fasta_path("test-data/map/DS1.fasta");
+
+  std::vector<pll_utree_t*> trees = pt::pll::ParseMultiNewick(newick_path);
+
+  CHECK(trees.size() == 4);
+
+  pll_utree_t* tree = trees[0];
+
+  std::vector<std::string> labels;
+  std::vector<std::string> sequences;
+  pt::pll::ParseFasta(fasta_path, tree->tip_count, labels, sequences);
+
+  pt::pll::Model model;
+
+  model.model_name = "JC";
+  model.frequencies.assign(4, 0.25);
+  model.subst_params.assign(6, 1.0);
+
+  double alpha = 0.1299395;
+
+  model.category_rates.resize(4);
+  pll_compute_gamma_cats(alpha,
+                         model.category_rates.size(),
+                         model.category_rates.data(),
+                         PLL_GAMMA_RATES_MEAN);
+
+  bool map_mode = true;
+
+  pt::pll::Partition partition(tree, model, labels, sequences, map_mode);
+  pll_unode_t* root = tree->nodes[tree->tip_count + tree->inner_count - 1];
+
+  partition.TraversalUpdate(root, pt::pll::TraversalType::FULL);
+
+  CHECK(partition.LogLikelihood(root) == Approx(-6479.38363171722));
+
+  // TODO: not ready yet
+#if 0
+  double default_length = 1.0;
+  std::map<pll_unode_t*, double> original_lengths =
+      ResetBranchLengths(root, partition.node_count(), default_length);
+
+  partition.OptimizeAllBranches(root);
+
+  CHECK(partition.LogLikelihood(root) == Approx(-6479.38363171722));
+
+  for (auto& kv : original_lengths) {
+    pll_unode_t* node = kv.first;
+    double original_length = original_lengths[node];
+
+    CHECK(node->length == Approx(original_length).epsilon(1e-3));
+    CHECK(node->back->length == Approx(original_length).epsilon(1e-3));
+  }
+#endif
+}
+
 bool CompareModels(const pt::pll::Model& lhs, const pt::pll::Model& rhs)
 {
   return (lhs.frequencies == rhs.frequencies &&

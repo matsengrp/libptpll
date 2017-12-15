@@ -29,6 +29,7 @@ class Partition
                                        decltype(&pllmod_util_model_destroy)>;
 
   const unsigned int tip_node_count_;
+  bool map_mode_;
   PartitionPtr partition_;
   ModelInfoPtr model_info_;
   std::vector<unsigned int> params_indices_;
@@ -47,7 +48,8 @@ class Partition
   Partition(pll_utree_t* tree,
             const Model& model,
             const std::vector<std::string>& labels,
-            const std::vector<std::string>& sequences);
+            const std::vector<std::string>& sequences,
+            bool map_mode = false);
 
   // move constructor
   Partition(Partition&& rhs);
