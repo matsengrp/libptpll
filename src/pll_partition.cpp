@@ -326,6 +326,9 @@ double Partition::OptimizeBranch(pll_unode_t* node)
   double len = node->length;
   bool maybe_decreasing = false;
 
+  // TODO: debugging only
+  //std::cerr << "optimization start\n";
+
   for (unsigned int i = 0; i < MAX_ITER; ++i) {
     double d1; // First derivative.
     double d2; // Second derivative.
@@ -339,6 +342,17 @@ double Partition::OptimizeBranch(pll_unode_t* node)
       double lambda = 10.0;
 
       d1 -= lambda;
+    }
+
+    // TODO: debugging only
+    //std::cerr << "len = " << len << ", d1 = " << d1 << ", d2 = " << d2 << "\n";
+
+    if (!std::isfinite(d1)) {
+      throw std::range_error("d1 is not finite");
+    }
+
+    if (!std::isfinite(d2)) {
+      throw std::range_error("d2 is not finite");
     }
 
     // printf("Branch length: %f log-L: %f Derivative: %f D2: %f\n", len,
