@@ -341,7 +341,7 @@ double Partition::OptimizeBranch(pll_unode_t* node)
     if (map_mode_) {
       double lambda = 10.0;
 
-      d1 -= lambda;
+      d1 += lambda;
     }
 
     // TODO: debugging only
