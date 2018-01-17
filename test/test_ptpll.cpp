@@ -481,9 +481,7 @@ TEST_CASE("full optimization in MAP mode works correctly with JC69", "[optimize_
 
   CHECK(partition.LogLikelihood(root) == Approx(-6478.57198303077));
 
-  // TODO: not ready yet
-#if 1
-  double default_length = 0.1;
+  double default_length = 1.0;
   std::map<pll_unode_t*, double> original_lengths =
       ResetBranchLengths(root, partition.node_count(), default_length);
 
@@ -496,10 +494,9 @@ TEST_CASE("full optimization in MAP mode works correctly with JC69", "[optimize_
     pll_unode_t* node = kv.first;
     double original_length = original_lengths[node];
 
-    CHECK(node->length == Approx(original_length));
+    CHECK(node->length == Approx(original_length).epsilon(1e-3));
     CHECK(node->length == node->back->length);
   }
-#endif
 }
 
 bool CompareModels(const pt::pll::Model& lhs, const pt::pll::Model& rhs)
