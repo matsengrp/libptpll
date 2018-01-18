@@ -65,6 +65,7 @@ Partition::Partition(pll_utree_t* tree,
 
 Partition::Partition(Partition&& rhs) :
     tip_node_count_(rhs.tip_node_count_),
+    map_mode_(rhs.map_mode_),
     partition_(nullptr, &pll_partition_destroy),
     model_info_(nullptr, &pllmod_util_model_destroy),
     sumtable_(nullptr)
