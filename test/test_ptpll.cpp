@@ -14,6 +14,31 @@
 #include "pll_partition.hpp"
 #include "pll_util.hpp"
 
+TEST_CASE("marginal likelihood calculations are correct", "[marginal]")
+{
+  std::string newick_path("test-data/five_JC/RAxML_bestTree.five_JC");
+  std::string fasta_path("test-data/five_JC/five.fasta");
+  std::string raxml_path("test-data/five_JC/RAxML_info.five_JC");
+
+  pll_utree_t* tree = pll_utree_parse_newick(newick_path.c_str());
+
+  std::vector<std::string> labels;
+  std::vector<std::string> sequences;
+  pt::pll::ParseFasta(fasta_path, tree->tip_count, labels, sequences);
+
+  pt::pll::Model model = pt::pll::ParseRaxmlInfo(raxml_path);
+
+  pt::pll::Partition partition(tree, model, labels, sequences, true);
+  pll_unode_t* root = tree->nodes[tree->tip_count + tree->inner_count - 1];
+
+  partition.OptimizeAllBranchesAndModel(root);
+
+  SECTION("log-marginal likelihoods are computed correctly")
+  {
+    REQUIRE(partition.LogMarginalLikelihood(root) == Approx(-3951.745).epsilon(0.001));
+  }
+}
+
 TEST_CASE("partition operations are correct", "[partition]")
 {
   std::string newick_path("test-data/tiny/newton.tre");

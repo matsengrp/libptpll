@@ -2,3 +2,7 @@
 	path = lib/pll-modules
 	url = https://github.com/ddarriba/pll-modules.git
 	branch = dev
+[submodule "lib/lesplace"]
+	path = lib/lesplace
+	url = https://github.com/4ment/lesplace.git
+	branch = master
