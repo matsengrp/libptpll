@@ -12,9 +12,9 @@
 #include <libpll/pll.h>
 
 extern "C" {
+#include <lesplace.h>
 #include <libpll/pll_optimize.h>
 #include <libpll/pllmod_algorithm.h>
-#include "lesplace.h"
 }
 
 #include "model.hpp"
@@ -215,7 +215,8 @@ void Partition::FreeScratchBuffers()
   }
 }
 
-struct pt_data_t{
+struct pt_data_t
+{
   Partition* partition;
   pll_partition_t* pll_partition;
   double* sumtable;
@@ -223,18 +224,21 @@ struct pt_data_t{
   std::vector<pll_unode_t*>* nodes;
 };
 
-double log_likelihood_callback(void* data, size_t index, double t){
+double log_likelihood_callback(void* data, size_t index, double t)
+{
   pt_data_t* pt_data = static_cast<pt_data_t*>(data);
+
   pt_data->partition->UpdateBranchLength(pt_data->nodes->at(index), t);
   double logP = pt_data->partition->LogLikelihood(pt_data->nodes->at(index));
+
   return logP;
 }
 
 void log_likelihood_derivatives_callback(void* data, size_t index, double* d1, double* d2)
 {
   pt_data_t* pt_data = static_cast<pt_data_t*>(data);
-  pll_unode_t *node = pt_data->nodes->at(index);
-  pll_unode_t *child = node->back;
+  pll_unode_t* node = pt_data->nodes->at(index);
+  pll_unode_t* child = node->back;
 
   pt_data->partition->TraversalUpdate(node, TraversalType::PARTIAL);
 
@@ -244,9 +248,12 @@ void log_likelihood_derivatives_callback(void* data, size_t index, double* d1, d
                       node->scaler_index, child->scaler_index,
                       pt_data->params_indices->data(), pt_data->sumtable);
 
-  pll_compute_likelihood_derivatives(pt_data->pll_partition, node->scaler_index, child->scaler_index, node->length,
+  pll_compute_likelihood_derivatives(
+      pt_data->pll_partition, node->scaler_index, child->scaler_index, node->length,
       pt_data->params_indices->data(), pt_data->sumtable, d1, d2);
-  double lambda = 10;
+
+  double lambda = 10.0;
+
   *d1 = -*d1 - lambda;
   *d2 = -*d2;
 }
@@ -261,18 +268,20 @@ double Partition::LogMarginalLikelihood(pll_unode_t* root)
   // nodes will be tips, in which case we operate on node->back (the
   // tip's parent) instead of node; see below.
   if (!pll_utree_traverse(root, PLL_TREE_TRAVERSE_POSTORDER,
-							[](pll_unode_t*) { return 1; }, nodes.data(),
-							&nodes_found)) {
-		throw std::invalid_argument("OptimizeAllBranches() requires an inner node");
+                          [](pll_unode_t*) { return 1; }, nodes.data(),
+                          &nodes_found)) {
+    throw std::invalid_argument("LogMarginalLikelihood() requires an inner node");
   }
 
   if (nodes_found != nodes.size()) {
     throw std::invalid_argument("Unexpected number of nodes");
   }
+
   std::vector<double> estimates;
   std::vector<pll_unode_t*> nodes2;
-  double logPrior = 0;
+  double logPrior = 0.0;
   double lambda = 10.0;
+
   for (auto node : nodes) {
     //std::cout << node << " " << root->back<< std::endl;
     if (node == root->back) {
@@ -286,10 +295,14 @@ double Partition::LogMarginalLikelihood(pll_unode_t* root)
     estimates.push_back(node->length);
     logPrior += std::log(lambda) - (lambda * node->length);
   }
+
   // Assumes that TraversalUpdate was called by the caller
   double map = LogLikelihood(root);// + logPrior;
-  pt_data_t pt_data = {this, partition_.get(), sumtable_, &params_indices_, &nodes2};
-  double logMarginal = lesplace_gamma(&log_likelihood_callback, &log_likelihood_derivatives_callback, &pt_data, nodes2.size(), map, estimates.data());
+  pt_data_t pt_data = { this, partition_.get(), sumtable_, &params_indices_, &nodes2 };
+  double logMarginal = lesplace_gamma(&log_likelihood_callback,
+                                      &log_likelihood_derivatives_callback,
+                                      &pt_data, nodes2.size(), map, estimates.data());
+
   return logMarginal;
 }
 

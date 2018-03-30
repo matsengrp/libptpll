@@ -61,3 +61,9 @@ add_library(pll_util STATIC IMPORTED GLOBAL)
 set_target_properties(pll_util PROPERTIES
   IMPORTED_LOCATION "${PLL_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}pll_util${CMAKE_STATIC_LIBRARY_SUFFIX}"
   INTERFACE_INCLUDE_DIRECTORIES "${PLL_INCLUDE_DIR}")
+
+#
+# lesplace
+#
+
+add_subdirectory(lesplace)
