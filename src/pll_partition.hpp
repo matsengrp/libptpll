@@ -18,7 +18,7 @@ namespace pt { namespace pll {
 
 // MAX_ITER: Max iterations when optimizing branch lengths.
 const unsigned int MAX_ITER = 32;
-const double EPSILON = 1e-5; // Threshold for detecting zero.
+const double EPSILON = 1e-6; // Threshold for detecting zero.
 
 class Partition
 {

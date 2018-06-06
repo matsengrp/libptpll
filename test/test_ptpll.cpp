@@ -47,7 +47,7 @@ TEST_CASE("partition operations are correct", "[partition]")
     REQUIRE(original_length != Approx(optimized_length));
 
     // verify that the length is correct
-    REQUIRE(optimized_length == Approx(2.607098));
+    REQUIRE(optimized_length == Approx(2.607234));
 
     // verify that the tree was modified
     REQUIRE(node->length == optimized_length);
