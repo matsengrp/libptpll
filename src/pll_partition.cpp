@@ -487,8 +487,30 @@ double Partition::OptimizeBranch(pll_unode_t* node)
   return len;
 }
 
-void Partition::OptimizeAllBranchesOnce(pll_unode_t* tree)
+void Partition::OptimizeAllBranchesOnce(pll_unode_t* tree, bool use_pllmod)
 {
+  if (use_pllmod) {
+    TraversalUpdate(tree, TraversalType::PARTIAL);
+
+    pllmod_opt_optimize_branch_lengths_iterative(
+        partition_.get(),
+        tree,
+        params_indices_.data(),
+        1e-8, /* branch_length_min */
+        PLLMOD_OPT_MAX_BRANCH_LEN,
+        1e-8, /* tolerance */
+        1, /* smoothings */
+        1 /* keep_update */);
+
+
+    // the non-pllmod version of OptimizeAllBranchesOnce() leaves the
+    // CLVs pointing at tree (below, by virtue of post-order traversal),
+    // so we do too
+    TraversalUpdate(tree, TraversalType::PARTIAL);
+
+    return;
+  }
+
   std::vector<pll_unode_t*> nodes(node_count(), nullptr);
   unsigned int nodes_found;
 
@@ -517,9 +539,28 @@ void Partition::OptimizeAllBranchesOnce(pll_unode_t* tree)
   }
 }
 
-void Partition::OptimizeAllBranches(pll_unode_t* tree)
+void Partition::OptimizeAllBranches(pll_unode_t* tree, bool use_pllmod)
 {
   TraversalUpdate(tree, TraversalType::PARTIAL);
+
+  if (use_pllmod) {
+    pllmod_opt_optimize_branch_lengths_iterative(
+        partition_.get(),
+        tree,
+        params_indices_.data(),
+        1e-8, /* branch_length_min */
+        PLLMOD_OPT_MAX_BRANCH_LEN,
+        1e-8, /* tolerance */
+        MAX_ITER,
+        1 /* keep_update */);
+
+    // the non-pllmod version of OptimizeAllBranches() leaves the CLVs
+    // pointing at tree (below), so we do too
+    TraversalUpdate(tree, TraversalType::PARTIAL);
+
+    return;
+  }
+
   double loglike_prev = LogLikelihood(tree);
 
   OptimizeAllBranchesOnce(tree);
@@ -678,12 +719,12 @@ double Partition::OptimizeModel(pll_unode_t* tree)
   return curr_lnl;
 }
 
-double Partition::OptimizeAllBranchesAndModel(pll_unode_t* tree)
+double Partition::OptimizeAllBranchesAndModel(pll_unode_t* tree, bool use_pllmod)
 {
   TraversalUpdate(tree, TraversalType::PARTIAL);
   double prev_lnl = LogLikelihood(tree);
 
-  OptimizeAllBranchesOnce(tree);
+  OptimizeAllBranchesOnce(tree, use_pllmod);
   OptimizeModelOnce(tree);
 
   TraversalUpdate(tree, TraversalType::PARTIAL);
@@ -693,7 +734,7 @@ double Partition::OptimizeAllBranchesAndModel(pll_unode_t* tree)
   while (std::abs(prev_lnl - curr_lnl) > EPSILON && i < MAX_ITER) {
     prev_lnl = curr_lnl;
 
-    OptimizeAllBranchesOnce(tree);
+    OptimizeAllBranchesOnce(tree, use_pllmod);
     OptimizeModelOnce(tree);
 
     // the pll-modules parameter optimization functions called in

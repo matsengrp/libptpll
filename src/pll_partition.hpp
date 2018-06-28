@@ -68,14 +68,14 @@ class Partition
   void UpdateBranchLength(pll_unode_t* node, double length);
 
   double OptimizeBranch(pll_unode_t* node);
-  void OptimizeAllBranchesOnce(pll_unode_t* tree);
-  void OptimizeAllBranches(pll_unode_t* tree);
+  void OptimizeAllBranchesOnce(pll_unode_t* tree, bool use_pllmod = false);
+  void OptimizeAllBranches(pll_unode_t* tree, bool use_pllmod = false);
   void OptimizeBranchNeighborhood(pll_unode_t* node, int radius);
 
   double OptimizeModelOnce(pll_unode_t* tree);
   double OptimizeModel(pll_unode_t* tree);
 
-  double OptimizeAllBranchesAndModel(pll_unode_t* tree);
+  double OptimizeAllBranchesAndModel(pll_unode_t* tree, bool use_pllmod = false);
 
   Model GetModel() const;
   void SetModel(const Model& model);
