@@ -31,6 +31,8 @@ pll_partition_t *pllext_partition_clone(pll_partition_t *rhs);
 
 bool TreeHealthy(pll_utree_t *tree);
 
+void set_missing_branch_length(pll_utree_t *tree, double length);
+
 unsigned int ParseFasta(std::string path, unsigned int seq_count,
                         std::vector<std::string> &headers_out,
                         std::vector<std::string> &seqdata_out);

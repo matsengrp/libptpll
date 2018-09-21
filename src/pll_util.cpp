@@ -41,6 +41,26 @@ bool TreeHealthy(pll_utree_t *tree) {
   return pll_utree_every(tree, cb_branch_healthy);
 }
 
+// If branch lengths aren't present in a tree (i.e. 0 or NULL), set them equal to 'length'.
+// Note that this function is not used in libptpll code!
+void set_missing_branch_length(pll_utree_t *tree, double length) {
+  unsigned int i;
+
+  for (i = 0; i < tree->tip_count; ++i)
+    if (!tree->nodes[i]->length)
+      tree->nodes[i]->length = length;
+
+  for (i = tree->tip_count; i < tree->tip_count + tree->inner_count; ++i)
+  {
+    if (!tree->nodes[i]->length)
+      tree->nodes[i]->length = length;
+    if (!tree->nodes[i]->next->length)
+      tree->nodes[i]->next->length = length;
+    if (!tree->nodes[i]->next->next->length)
+      tree->nodes[i]->next->next->length = length;
+  }
+}
+
 // A callback function for performing full and partial traversals.
 int cb_traversal(pll_unode_t *node, TraversalType type) {
   node_info_t *node_info;
