@@ -41,7 +41,7 @@ bool TreeHealthy(pll_utree_t *tree) {
   return pll_utree_every(tree, cb_branch_healthy);
 }
 
-// If branch lengths aren't present in a tree (i.e. 0 or NULL), set them equal to 'length'
+// If branch lengths aren't present in a tree (i.e. 0 or NULL), set them equal to 'length'.
 // Note that this function is not used in libptpll code!
 void set_missing_branch_length(pll_utree_t *tree, double length) {
   unsigned int i;
